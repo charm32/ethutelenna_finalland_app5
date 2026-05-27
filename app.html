@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>eThute Lenna — Study App</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Nunito Sans',sans-serif;color:#1a3a5c;background:linear-gradient(145deg,#f8f4ff 0%,#fdf9ff 50%,#f3eeff 100%);min-height:100vh;overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+
+/* ── Layout ── */
+.app-layout{display:flex;min-height:100vh;}
+.sidebar{width:240px;min-height:100vh;background:linear-gradient(180deg,#1a3a5c 0%,#1e5799 60%,#2980b9 100%);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;padding:20px 12px;z-index:50;transition:transform 0.3s;}
+.sidebar.hidden{transform:translateX(-100%);}
+.main-content{margin-left:240px;flex:1;padding:24px;min-height:100vh;transition:margin-left 0.3s;}
+.main-content.full{margin-left:0;}
+
+/* ── Sidebar ── */
+.sb-logo{text-align:center;padding:8px 0 4px;}
+.sb-logo .logo-icon{font-size:2.2rem;}
+.sb-logo h2{font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:#e8f4fd;margin:4px 0 2px;}
+.sb-user{text-align:center;font-size:0.75rem;color:rgba(232,244,253,0.7);margin-bottom:4px;}
+.sb-coins{text-align:center;font-size:0.85rem;color:#e8f4fd;font-weight:700;margin-bottom:12px;}
+.sb-divider{border:none;border-top:1px solid rgba(255,255,255,0.15);margin:8px 0;}
+.sb-label{font-size:0.65rem;letter-spacing:1.5px;color:rgba(232,244,253,0.5);text-transform:uppercase;padding:4px 8px 2px;font-weight:700;}
+.sb-btn{display:block;width:100%;text-align:left;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:10px;padding:9px 14px;font-family:'Nunito',sans-serif;font-weight:600;font-size:0.87rem;cursor:pointer;margin-bottom:4px;transition:all 0.2s;}
+.sb-btn:hover,.sb-btn.active{background:rgba(255,255,255,0.25);transform:translateX(4px);}
+.sb-logout{margin-top:auto;background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);}
+.sb-logout:hover{background:rgba(239,68,68,0.4);}
+
+/* ── Pages ── */
+.page{display:none;animation:fadeIn 0.3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── Auth page ── */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.auth-card{background:white;border-radius:20px;padding:2.2rem;box-shadow:0 14px 40px rgba(30,87,153,0.16);border:1px solid #bfdbfe;width:100%;max-width:420px;}
+.auth-logo{text-align:center;margin-bottom:1rem;}
+.auth-logo .lemon{font-size:3rem;}
+.auth-logo h1{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.6rem;color:#1a3a5c;margin:4px 0 2px;}
+.auth-logo p{color:#9ca3af;font-size:0.85rem;}
+.auth-tabs{display:flex;gap:8px;margin-bottom:1.5rem;background:#f3f4f6;border-radius:12px;padding:4px;}
+.auth-tab{flex:1;padding:9px;text-align:center;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;border:none;background:transparent;color:#6b7280;transition:all 0.2s;}
+.auth-tab.active{background:white;color:#1e5799;box-shadow:0 2px 8px rgba(30,87,153,0.12);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.82rem;color:#1a3a5c;margin-bottom:5px;}
+.form-group input,.form-group select{width:100%;padding:12px 15px;border:1.5px solid #bfdbfe;border-radius:12px;font-family:'Nunito Sans',sans-serif;font-size:0.9rem;color:#1a3a5c;background:#eff6ff;outline:none;transition:border-color 0.2s;}
+.form-group input:focus,.form-group select:focus{border-color:#1e5799;}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;margin-top:4px;transition:all 0.2s;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(30,87,153,0.3);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.alert{border-radius:10px;padding:10px 14px;font-size:0.85rem;margin-top:8px;}
+.alert-warn{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;}
+.alert-success{background:#f0fdf4;border:1px solid #86efac;color:#166534;}
+.alert-error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+
+/* ── Subject setup ── */
+.subject-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1rem;}
+.subject-toggle{background:white;border:2px solid #bfdbfe;border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;color:#1a3a5c;}
+.subject-toggle:hover{border-color:#1e5799;background:#eff6ff;}
+.subject-toggle.selected{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border-color:#1e5799;}
+.subject-toggle .emoji{font-size:1.4rem;display:block;margin-bottom:4px;}
+
+/* ── Dashboard ── */
+.page-header{background:white;border-radius:16px;padding:1rem 1.5rem;box-shadow:0 2px 12px rgba(30,87,153,0.08);margin-bottom:1.5rem;display:flex;align-items:center;gap:14px;}
+.page-header .logo-icon{font-size:1.8rem;}
+.page-header h1{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.3rem;color:#1a3a5c;margin:0;}
+.page-header p{font-size:0.78rem;color:#9ca3af;margin:0;}
+.coin-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border-radius:20px;padding:6px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.9rem;box-shadow:0 2px 8px rgba(245,158,11,0.4);margin-left:auto;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:1.5rem;}
+.stat-card{background:white;border-radius:14px;padding:1.2rem 1rem;text-align:center;box-shadow:0 2px 10px rgba(30,87,153,0.08);border-top:4px solid;}
+.stat-card .num{font-family:'Nunito',sans-serif;font-size:1.8rem;font-weight:800;color:#1a3a5c;}
+.stat-card .label{font-size:0.75rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+
+.subjects-grid-dash{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.subject-card{background:white;border-radius:14px;padding:1.2rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);border-left:5px solid #2980b9;transition:all 0.2s;cursor:pointer;}
+.subject-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(30,87,153,0.14);}
+.subject-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a3a5c;margin:0 0 4px;font-size:1rem;}
+.subject-card p{font-size:0.8rem;color:#9ca3af;margin:0;}
+.subject-card .open-btn{margin-top:10px;background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;border-radius:8px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
+.subject-card .open-btn:hover{transform:translateY(-1px);}
+
+/* ── Subject page ── */
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:2px solid #bfdbfe;padding-bottom:0;}
+.tab{padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.88rem;color:#6b7280;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;}
+.tab.active{color:#1e5799;border-bottom-color:#1e5799;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ── Study units ── */
+.unit-card{background:white;border-radius:14px;padding:1.2rem 1.5rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);margin-bottom:12px;border-left:5px solid #2980b9;}
+.unit-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a3a5c;margin:0 0 6px;}
+.unit-card .duration{font-size:0.78rem;color:#9ca3af;margin-bottom:10px;}
+.watch-btn{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;border-radius:8px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s;}
+.watch-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(30,87,153,0.3);}
+
+/* ── Chat / AI ── */
+.chat-container{background:white;border-radius:14px;box-shadow:0 2px 10px rgba(30,87,153,0.07);overflow:hidden;display:flex;flex-direction:column;height:500px;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.chat-msg{display:flex;gap:10px;align-items:flex-start;}
+.chat-msg.user{flex-direction:row-reverse;}
+.chat-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.chat-avatar.ai{background:#eff6ff;}
+.chat-avatar.user-av{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;font-size:0.75rem;font-weight:700;}
+.bubble{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;font-size:0.88rem;line-height:1.7;color:#1a3a5c;max-width:80%;}
+.bubble.user-bubble{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;}
+.bubble h2,.bubble h3{font-family:'Nunito',sans-serif;font-weight:700;margin:8px 0 4px;font-size:0.95rem;}
+.bubble ul{padding-left:1.2rem;margin:4px 0;}
+.bubble li{margin-bottom:3px;}
+.bubble strong{font-weight:700;}
+.typing-indicator{display:flex;gap:5px;padding:10px 14px;background:#eff6ff;border-radius:12px;width:fit-content;}
+.typing-indicator span{width:7px;height:7px;background:#bfdbfe;border-radius:50%;animation:typing 1.2s ease-in-out infinite;}
+.typing-indicator span:nth-child(2){animation-delay:0.2s;}
+.typing-indicator span:nth-child(3){animation-delay:0.4s;}
+@keyframes typing{0%,80%,100%{transform:scale(1);opacity:0.5;}40%{transform:scale(1.3);opacity:1;}}
+.chat-input-bar{padding:12px 16px;border-top:1px solid #bfdbfe;display:flex;gap:10px;align-items:center;}
+.chat-input-bar select{padding:9px 12px;border:1.5px solid #bfdbfe;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-size:0.82rem;color:#1a3a5c;background:#eff6ff;outline:none;}
+.chat-input-bar input{flex:1;padding:10px 14px;border:1.5px solid #bfdbfe;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-size:0.88rem;color:#1a3a5c;background:#eff6ff;outline:none;}
+.chat-input-bar input:focus{border-color:#1e5799;}
+.send-btn{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;border-radius:10px;width:38px;height:38px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
+.send-btn:hover{transform:scale(1.05);}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.no-pdf-notice{background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:12px 16px;font-size:0.85rem;color:#92400e;margin-bottom:12px;}
+
+/* ── Quiz ── */
+.quiz-card{background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);margin-bottom:14px;}
+.quiz-question{font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;color:#1a3a5c;margin-bottom:1rem;}
+.quiz-options{display:flex;flex-direction:column;gap:8px;}
+.quiz-option{background:#f3f4f6;border:2px solid #e5e7eb;border-radius:10px;padding:11px 16px;font-family:'Nunito',sans-serif;font-weight:600;font-size:0.88rem;color:#1a3a5c;cursor:pointer;text-align:left;transition:all 0.2s;width:100%;}
+.quiz-option:hover{background:#eff6ff;border-color:#bfdbfe;}
+.quiz-option.correct{background:#f0fdf4;border-color:#86efac;color:#166534;}
+.quiz-option.wrong{background:#fef2f2;border-color:#fecaca;color:#991b1b;}
+.quiz-progress{background:#e5e7eb;border-radius:100px;height:6px;margin-bottom:1rem;overflow:hidden;}
+.quiz-progress-bar{height:100%;background:linear-gradient(90deg,#1e5799,#8b5cf6);border-radius:100px;transition:width 0.3s;}
+.quiz-result{background:linear-gradient(135deg,#1a3a5c,#1e5799);color:white;border-radius:16px;padding:2rem;text-align:center;margin-bottom:1rem;}
+.quiz-result .score-big{font-family:'Nunito',sans-serif;font-weight:900;font-size:3rem;}
+.quiz-result .score-msg{font-size:1rem;opacity:0.85;margin-top:4px;}
+.coin-result{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:16px;padding:1.5rem;text-align:center;margin-bottom:1rem;}
+.coin-result .amount{font-family:'Nunito',sans-serif;font-weight:900;font-size:2.2rem;color:#92400e;}
+.coin-result .sub{font-size:0.82rem;color:#b45309;margin-top:4px;}
+
+/* ── Progress ── */
+.track-card{background:white;border-radius:14px;padding:1.2rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);margin-bottom:10px;border-left:5px solid #2980b9;}
+.track-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a3a5c;margin:0 0 4px;font-size:0.95rem;}
+.track-card .meta{font-size:0.75rem;color:#9ca3af;margin-bottom:6px;}
+
+/* ── Study Guides page ── */
+.guide-card{background:white;border-radius:14px;padding:1.1rem 1.3rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);border-left:5px solid #27ae60;margin-bottom:10px;}
+.guide-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a5c30;margin:0 0 2px;font-size:0.95rem;}
+.guide-card p{font-size:0.8rem;color:#6b7280;margin:0;}
+
+/* ── Markdown rendering ── */
+.md-content h1,.md-content h2{font-family:'Nunito',sans-serif;font-weight:700;color:#1a3a5c;margin:8px 0 4px;font-size:1rem;}
+.md-content ul{padding-left:1.2rem;margin:4px 0;}
+.md-content li{margin-bottom:3px;font-size:0.88rem;}
+.md-content p{font-size:0.88rem;margin:3px 0;}
+.md-content strong{color:#1a3a5c;}
+
+/* ── Mobile ── */
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:100;background:white;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;cursor:pointer;box-shadow:0 2px 8px rgba(30,87,153,0.1);}
+@media(max-width:768px){
+  .hamburger{display:block;}
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main-content{margin-left:0;padding:16px;padding-top:56px;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .subjects-grid-dash{grid-template-columns:1fr;}
+  .subject-grid{grid-template-columns:repeat(2,1fr);}
+  .chat-container{height:420px;}
+}
+
+/* ── Utilities ── */
+.section-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.1rem;color:#1a3a5c;margin-bottom:1rem;}
+.text-muted{color:#9ca3af;font-size:0.85rem;}
+.mb-1{margin-bottom:8px;}
+.mb-2{margin-bottom:16px;}
+.mt-1{margin-top:8px;}
+.spinner{width:20px;height:20px;border:2px solid #bfdbfe;border-top-color:#1e5799;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="logo-icon">🍋</div>
+      <h2>eThute Lenna</h2>
+    </div>
+    <div class="sb-user" id="sb-username">👤 —</div>
+    <div class="sb-coins" id="sb-coins">🪙 0 coins</div>
+    <hr class="sb-divider"/>
+    <div class="sb-label">Navigation</div>
+    <button class="sb-btn" onclick="showPage('dashboard')">🏠 Dashboard</button>
+    <button class="sb-btn" onclick="showPage('progress')">📊 My Progress</button>
+    <button class="sb-btn" onclick="showPage('study-guides')">📂 Study Guides</button>
+    <button class="sb-btn" onclick="showPage('subjects-setup')">⚙️ My Subjects</button>
+    <hr class="sb-divider"/>
+    <div class="sb-label" id="sb-subjects-label">My Subjects</div>
+    <div id="sb-subject-buttons"></div>
+    <hr class="sb-divider"/>
+    <button class="sb-btn sb-logout" onclick="logout()">🚪 Logout</button>
+  </nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="main-content" id="main-content">
+
+    <!-- AUTH PAGE -->
+    <div id="page-auth" class="page active">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="auth-logo">
+            <div class="lemon">🍋</div>
+            <h1>eThute Lenna</h1>
+            <p>Grade 12 AI Study Assistant</p>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">🔐 Login</button>
+            <button class="auth-tab" onclick="switchAuthTab('register')">📝 Register</button>
+          </div>
+          <!-- Login -->
+          <div id="tab-login" class="tab-panel active">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="login-user" placeholder="Enter your username" onkeydown="if(event.key==='Enter')doLogin()"/>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+            </div>
+            <div id="login-alert"></div>
+            <button class="btn-primary" onclick="doLogin()" id="login-btn">Login</button>
+          </div>
+          <!-- Register -->
+          <div id="tab-register" class="tab-panel">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="reg-user" placeholder="Choose a username"/>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth</label>
+              <input type="date" id="reg-dob"/>
+            </div>
+            <div class="form-group">
+              <label>School Name</label>
+              <input type="text" id="reg-school" placeholder="Your school name"/>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="reg-pass" placeholder="Min 8 chars, uppercase, number" oninput="checkPw(this.value)"/>
+            </div>
+            <div id="pw-strength" style="display:none;border-radius:8px;padding:8px 12px;font-size:0.8rem;margin-bottom:8px;"></div>
+            <div id="reg-alert"></div>
+            <button class="btn-primary" onclick="doRegister()">Create Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBJECT SETUP PAGE -->
+    <div id="page-subjects-setup" class="page">
+      <div style="max-width:700px;margin:0 auto;padding:20px 0;">
+        <h2 class="section-title">📚 Choose Your Subjects</h2>
+        <p class="text-muted mb-2">Select the subjects you are studying this year. Tap to select/deselect.</p>
+        <div class="subject-grid" id="subject-toggle-grid"></div>
+        <div id="selected-count" style="margin-top:12px;font-size:0.88rem;color:#1e5799;font-weight:700;"></div>
+        <button class="btn-primary" onclick="saveSubjects()" id="save-subjects-btn" style="margin-top:16px;" disabled>✅ Save My Subjects & Continue</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <div class="logo-icon">🍋</div>
+        <div>
+          <h1>eThute Lenna</h1>
+          <p>Personal Study Assistant</p>
+        </div>
+        <div class="coin-badge" id="dash-coins">🪙 0 coins</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card" style="border-top-color:#3b82f6"><div class="num" id="stat-subjects">0</div><div class="label">Subjects</div></div>
+        <div class="stat-card" style="border-top-color:#10b981"><div class="num" id="stat-quizzes">0</div><div class="label">Quizzes Done</div></div>
+        <div class="stat-card" style="border-top-color:#8b5cf6"><div class="num" id="stat-avg">0%</div><div class="label">Avg Score</div></div>
+        <div class="stat-card" style="border-top-color:#f59e0b"><div class="num" id="stat-coins">🪙0</div><div class="label">Gold Coins</div></div>
+      </div>
+      <h3 class="section-title">My Subjects</h3>
+      <div class="subjects-grid-dash" id="dashboard-subjects"></div>
+    </div>
+
+    <!-- SUBJECT PAGE -->
+    <div id="page-subject" class="page">
+      <div class="page-header" id="subject-header">
+        <div class="logo-icon" id="subject-emoji">📚</div>
+        <div>
+          <h1 id="subject-title">Subject</h1>
+          <p id="subject-meta" class="text-muted"></p>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchSubjectTab('units',this)">🎬 Study Units</button>
+        <button class="tab" onclick="switchSubjectTab('ask',this)">❓ Ask AI Question</button>
+        <button class="tab" onclick="switchSubjectTab('quiz',this)">📝 Quiz</button>
+      </div>
+      <!-- Units -->
+      <div id="tab-units" class="tab-content active">
+        <p class="text-muted mb-2">Watch each lesson then take the quiz.</p>
+        <div id="units-list"></div>
+      </div>
+      <!-- Ask AI -->
+      <div id="tab-ask" class="tab-content">
+        <div class="no-pdf-notice" id="no-pdf-notice" style="display:none;">
+          ⚠️ No study guide PDFs found for this subject. Please upload PDFs to the <strong>study_guides/</strong> and/or <strong>previous_papers/</strong> folders and restart the server.
+        </div>
+        <p class="text-muted mb-2" id="pdf-source-info"></p>
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg">
+              <div class="chat-avatar ai">🍋</div>
+              <div class="bubble md-content" id="welcome-bubble">Hi! I'm eThute Lenna 🍋. Ask me anything about your subject — I'll answer from your uploaded study guides and previous papers!</div>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <select id="chat-lang">
+              <option value="English">🇿🇦 English</option>
+              <option value="isiZulu">🌍 isiZulu</option>
+              <option value="Sesotho">🌍 Sesotho</option>
+            </select>
+            <input type="text" id="chat-input" placeholder="Ask a question about your study material..." onkeydown="if(event.key==='Enter')sendQuestion()"/>
+            <button class="send-btn" id="send-btn" onclick="sendQuestion()">➤</button>
+          </div>
+        </div>
+      </div>
+      <!-- Quiz -->
+      <div id="tab-quiz" class="tab-content">
+        <div id="quiz-area"></div>
+      </div>
+    </div>
+
+    <!-- PROGRESS PAGE -->
+    <div id="page-progress" class="page">
+      <h2 class="section-title">📊 My Progress</h2>
+      <div class="stats-grid" id="progress-stats"></div>
+      <div id="progress-records" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- STUDY GUIDES PAGE -->
+    <div id="page-study-guides" class="page">
+      <h2 class="section-title">📂 Study Guides</h2>
+      <p class="text-muted mb-2">All uploaded PDFs — the Ask AI button answers from these documents.</p>
+      <div id="guides-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// =============================================================
+//  CONFIG
+// =============================================================
+const API = '';  // empty = same origin. Change to your Railway URL if needed.
+
+// =============================================================
+//  STATE
+// =============================================================
+let token = localStorage.getItem('el_token') || '';
+let username = localStorage.getItem('el_username') || '';
+let userSubjects = JSON.parse(localStorage.getItem('el_subjects') || '[]');
+let activeSubject = null;
+let activeSubjectData = null;
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswers = [];
+let quizSaved = false;
+let pendingSubjects = [];
+
+const SUBJECT_CATALOGUE = {
+  "Physics":       {emoji:"⚡", color:"#3b82f6"},
+  "Chemistry":     {emoji:"🧪", color:"#10b981"},
+  "Mathematics":   {emoji:"📐", color:"#8b5cf6"},
+  "Math Literacy": {emoji:"🔢", color:"#06b6d4"},
+  "Life Sciences": {emoji:"🌱", color:"#22c55e"},
+  "Geography":     {emoji:"🌍", color:"#f59e0b"},
+  "History":       {emoji:"📜", color:"#a78bfa"},
+  "English":       {emoji:"📖", color:"#ec4899"},
+};
+const ALL_SUBJECTS = Object.keys(SUBJECT_CATALOGUE);
+
+// =============================================================
+//  API HELPERS
+// =============================================================
+async function apiCall(method, path, body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Request failed');
+  return data;
+}
+
+// =============================================================
+//  AUTH
+// =============================================================
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+}
+
+function showAlert(elId, msg, type='warn') {
+  const el = document.getElementById(elId);
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (!u || !p) { showAlert('login-alert','Please enter username and password.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const data = await apiCall('POST', '/auth/login', {username:u, password:p});
+    token = data.access_token;
+    username = data.username;
+    localStorage.setItem('el_token', token);
+    localStorage.setItem('el_username', username);
+    await afterLogin();
+  } catch(e) {
+    showAlert('login-alert', '⚠️ ' + e.message);
+  } finally { btn.disabled=false; btn.textContent='Login'; }
+}
+
+async function doRegister() {
+  const u = document.getElementById('reg-user').value.trim();
+  const d = document.getElementById('reg-dob').value;
+  const s = document.getElementById('reg-school').value.trim();
+  const p = document.getElementById('reg-pass').value;
+  if (!u||!p||!s) { showAlert('reg-alert','Please fill in all fields.'); return; }
+  const strong = p.length>=8 && /[A-Z]/.test(p) && /[0-9]/.test(p);
+  if (!strong) { showAlert('reg-alert','Password must be 8+ chars, include uppercase and a number.'); return; }
+  try {
+    const data = await apiCall('POST', '/auth/register', {username:u,password:p,dob:d,school:s});
+    token = data.access_token; username = data.username;
+    localStorage.setItem('el_token', token);
+    localStorage.setItem('el_username', username);
+    showAlert('reg-alert','✅ Account created! Loading your dashboard...','success');
+    setTimeout(afterLogin, 800);
+  } catch(e) { showAlert('reg-alert','⚠️ '+e.message); }
+}
+
+async function afterLogin() {
+  try {
+    const data = await apiCall('GET', '/user/subjects');
+    userSubjects = data.subjects || [];
+    localStorage.setItem('el_subjects', JSON.stringify(userSubjects));
+  } catch(e) { userSubjects = []; }
+  updateSidebar();
+  if (userSubjects.length === 0) {
+    showPage('subjects-setup');
+    buildSubjectToggles();
+  } else {
+    showPage('dashboard');
+    loadDashboard();
+  }
+}
+
+function logout() {
+  token=''; username=''; userSubjects=[];
+  localStorage.removeItem('el_token'); localStorage.removeItem('el_username'); localStorage.removeItem('el_subjects');
+  showPage('auth');
+}
+
+// =============================================================
+//  SIDEBAR
+// =============================================================
+function updateSidebar() {
+  document.getElementById('sb-username').textContent = '👤 ' + (username || '—');
+  refreshCoins();
+  buildSidebarSubjects();
+}
+
+async function refreshCoins() {
+  try {
+    const data = await apiCall('GET', '/user/coins');
+    const c = data.coins || 0;
+    document.getElementById('sb-coins').textContent = '🪙 ' + c + ' coins';
+    document.getElementById('dash-coins').textContent = '🪙 ' + c + ' coins';
+    document.getElementById('stat-coins').textContent = '🪙' + c;
+  } catch(e) {}
+}
+
+function buildSidebarSubjects() {
+  const el = document.getElementById('sb-subject-buttons');
+  el.innerHTML = userSubjects.map(s => {
+    const info = SUBJECT_CATALOGUE[s] || {emoji:'📚'};
+    return `<button class="sb-btn" onclick="openSubject('${s}')">${info.emoji} ${s}</button>`;
+  }).join('');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// =============================================================
+//  PAGE NAVIGATION
+// =============================================================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+  if (name === 'auth') {
+    document.getElementById('main-content').classList.add('full');
+  } else {
+    document.getElementById('main-content').classList.remove('full');
+  }
+}
+
+// =============================================================
+//  SUBJECT SETUP
+// =============================================================
+function buildSubjectToggles() {
+  pendingSubjects = [...userSubjects];
+  const grid = document.getElementById('subject-toggle-grid');
+  grid.innerHTML = ALL_SUBJECTS.map(s => {
+    const info = SUBJECT_CATALOGUE[s];
+    const sel = pendingSubjects.includes(s);
+    return `<div class="subject-toggle ${sel?'selected':''}" id="toggle-${s.replace(/\s/g,'_')}" onclick="toggleSubject('${s}')">
+      <span class="emoji">${info.emoji}</span>${s}
+    </div>`;
+  }).join('');
+  updateSelectedCount();
+}
+
+function toggleSubject(s) {
+  const idx = pendingSubjects.indexOf(s);
+  if (idx >= 0) pendingSubjects.splice(idx,1);
+  else pendingSubjects.push(s);
+  const el = document.getElementById('toggle-'+s.replace(/\s/g,'_'));
+  el.classList.toggle('selected', pendingSubjects.includes(s));
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const n = pendingSubjects.length;
+  const el = document.getElementById('selected-count');
+  const btn = document.getElementById('save-subjects-btn');
+  el.textContent = n > 0 ? `✅ ${n} selected: ${pendingSubjects.join(', ')}` : '⚠️ Please select at least one subject.';
+  btn.disabled = n === 0;
+}
+
+async function saveSubjects() {
+  try {
+    await apiCall('PUT', '/user/subjects', {subjects: pendingSubjects});
+    userSubjects = [...pendingSubjects];
+    localStorage.setItem('el_subjects', JSON.stringify(userSubjects));
+    buildSidebarSubjects();
+    showPage('dashboard');
+    loadDashboard();
+  } catch(e) { alert('Could not save subjects: ' + e.message); }
+}
+
+// =============================================================
+//  DASHBOARD
+// =============================================================
+async function loadDashboard() {
+  updateSidebar();
+  try {
+    const data = await apiCall('GET', '/user/tracking');
+    const records = data.records || [];
+    const coins = data.coins || 0;
+    const total = records.length;
+    const subjects_done = new Set(records.map(r=>r.subject)).size;
+    const avg = total ? Math.round(records.reduce((a,r)=>a+r.score/Math.max(r.total_questions||3,1),0)/total*100) : 0;
+    document.getElementById('stat-subjects').textContent = userSubjects.length;
+    document.getElementById('stat-quizzes').textContent = total;
+    document.getElementById('stat-avg').textContent = avg + '%';
+    document.getElementById('stat-coins').textContent = '🪙' + coins;
+    document.getElementById('dash-coins').textContent = '🪙 ' + coins + ' coins';
+  } catch(e) {}
+  const grid = document.getElementById('dashboard-subjects');
+  grid.innerHTML = userSubjects.length === 0
+    ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:1rem;color:#1e3a5f;font-size:0.9rem">
+        👆 No subjects yet. Click <strong>⚙️ My Subjects</strong> in the sidebar to get started.
+      </div>`
+    : userSubjects.map(s => {
+        const info = SUBJECT_CATALOGUE[s] || {emoji:'📚',color:'#3b82f6'};
+        return `<div class="subject-card" style="border-left-color:${info.color}">
+          <h4>${info.emoji} ${s}</h4>
+          <p>Tap to study, quiz, and ask AI questions</p>
+          <button class="open-btn" onclick="openSubject('${s}')">Open ${info.emoji} ${s}</button>
+        </div>`;
+      }).join('');
+}
+
+// =============================================================
+//  SUBJECT PAGE
+// =============================================================
+async function openSubject(subjectName) {
+  activeSubject = subjectName;
+  quizIndex = 0; quizScore = 0; quizAnswers = []; quizSaved = false;
+  try {
+    const data = await apiCall('GET', `/subjects/${encodeURIComponent(subjectName)}`);
+    activeSubjectData = data;
+  } catch(e) { alert('Could not load subject: '+e.message); return; }
+
+  const info = SUBJECT_CATALOGUE[subjectName] || {emoji:'📚',color:'#3b82f6'};
+  document.getElementById('subject-emoji').textContent = info.emoji;
+  document.getElementById('subject-title').textContent = subjectName;
+  document.getElementById('subject-meta').textContent = `Grade 12 · ${(activeSubjectData.units||[]).length} Study Units`;
+
+  // Reset tabs
+  switchSubjectTab('units', document.querySelector('.tab'));
+
+  // Build units
+  const ul = document.getElementById('units-list');
+  ul.innerHTML = (activeSubjectData.units||[]).map((u,i) => `
+    <div class="unit-card">
+      <h4>▶️ Unit ${i+1}: ${u.title}</h4>
+      <div class="duration">⏱ ${u.duration}</div>
+      <a class="watch-btn" href="${u.video}" target="_blank" rel="noopener">🎬 Watch Lesson</a>
+    </div>`).join('');
+
+  // Reset chat
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = `<div class="chat-msg">
+    <div class="chat-avatar ai">🍋</div>
+    <div class="bubble md-content">Hi! I'm eThute Lenna 🍋. Ask me anything about <strong>${subjectName}</strong> — I'll answer from your uploaded study guides and previous papers!</div>
+  </div>`;
+  document.getElementById('pdf-source-info').textContent = `📄 Answers come from study guides & previous papers for ${subjectName}.`;
+  document.getElementById('no-pdf-notice').style.display = 'none';
+
+  // Build quiz
+  buildQuiz();
+
+  showPage('subject');
+}
+
+function switchSubjectTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// =============================================================
+//  CHAT / ASK AI  — uses /subjects/{name}/ask endpoint
+//  which now searches BOTH study_guides/ AND previous_papers/
+// =============================================================
+async function sendQuestion() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim();
+  if (!q) return;
+  const lang = document.getElementById('chat-lang').value;
+  const msgs = document.getElementById('chat-messages');
+  const sendBtn = document.getElementById('send-btn');
+  const initials = username.substring(0,2).toUpperCase();
+
+  // Show user message
+  msgs.innerHTML += `<div class="chat-msg user">
+    <div class="chat-avatar user-av">${initials}</div>
+    <div class="bubble user-bubble">${escapeHtml(q)}</div>
+  </div>`;
+  input.value = '';
+  sendBtn.disabled = true;
+
+  // Show typing
+  const typingId = 'typing-' + Date.now();
+  msgs.innerHTML += `<div class="chat-msg" id="${typingId}">
+    <div class="chat-avatar ai">🍋</div>
+    <div class="typing-indicator"><span></span><span></span><span></span></div>
+  </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const data = await apiCall('POST', `/subjects/${encodeURIComponent(activeSubject)}/ask`, {
+      question: q, language: lang
+    });
+    document.getElementById(typingId)?.remove();
+    msgs.innerHTML += `<div class="chat-msg">
+      <div class="chat-avatar ai">🍋</div>
+      <div class="bubble md-content">${renderMarkdown(data.answer)}</div>
+    </div>`;
+    document.getElementById('no-pdf-notice').style.display = 'none';
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    if (e.message.includes('No PDFs found') || e.message.includes('study guide')) {
+      document.getElementById('no-pdf-notice').style.display = 'block';
+    }
+    msgs.innerHTML += `<div class="chat-msg">
+      <div class="chat-avatar ai">🍋</div>
+      <div class="bubble" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">⚠️ ${escapeHtml(e.message)}</div>
+    </div>`;
+  } finally {
+    sendBtn.disabled = false;
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+// =============================================================
+//  QUIZ
+// =============================================================
+function buildQuiz() {
+  quizIndex = 0; quizScore = 0; quizAnswers = []; quizSaved = false;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const questions = (activeSubjectData?.quiz) || [];
+  const area = document.getElementById('quiz-area');
+  if (!questions.length) { area.innerHTML = '<p class="text-muted">No quiz questions available for this subject.</p>'; return; }
+  if (quizIndex >= questions.length) { renderQuizResult(); return; }
+  const q = questions[quizIndex];
+  const pct = Math.round(quizIndex / questions.length * 100);
+  area.innerHTML = `
+    <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${pct}%"></div></div>
+    <p class="text-muted mb-1">Question ${quizIndex+1} of ${questions.length}</p>
+    <div class="quiz-card">
+      <div class="quiz-question">${escapeHtml(q.q)}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt,i) => `<button class="quiz-option" onclick="answerQuiz(${i})" id="opt-${i}">${escapeHtml(opt)}</button>`).join('')}
+      </div>
+      <div id="quiz-feedback" style="margin-top:12px;"></div>
+    </div>`;
+}
+
+function answerQuiz(idx) {
+  const questions = activeSubjectData.quiz;
+  const q = questions[quizIndex];
+  const correct = q.answer;
+  const isCorrect = idx === correct;
+  if (isCorrect) quizScore++;
+  quizAnswers.push({q: q.q, chosen: idx, correct, isCorrect});
+
+  document.querySelectorAll('.quiz-option').forEach((btn,i) => {
+    btn.disabled = true;
+    if (i === correct) btn.classList.add('correct');
+    else if (i === idx && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.innerHTML = `<div class="alert ${isCorrect?'alert-success':'alert-error'}" style="margin-bottom:8px;">
+    ${isCorrect ? '✅ Correct!' : '❌ Not quite.'} ${escapeHtml(q.explanation)}
+  </div>
+  <button class="btn-primary" style="margin-top:8px;" onclick="nextQuestion()">
+    ${quizIndex+1 < questions.length ? 'Next Question →' : 'See Results 🎉'}
+  </button>`;
+}
+
+function nextQuestion() {
+  quizIndex++;
+  renderQuiz();
+}
+
+async function renderQuizResult() {
+  const total = activeSubjectData.quiz.length;
+  const pct = Math.round(quizScore / total * 100);
+  const msg = pct >= 80 ? '🌟 Excellent work!' : pct >= 60 ? '👍 Good effort!' : '📚 Keep practising!';
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = `
+    <div class="quiz-result">
+      <div class="score-big">${pct}%</div>
+      <div class="score-msg">${quizScore} out of ${total} correct · ${msg}</div>
+    </div>
+    <div id="coin-area"></div>
+    <button class="btn-primary" onclick="buildQuiz()" style="margin-bottom:12px;">🔁 Retake Quiz</button>
+    <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);margin-bottom:12px;" onclick="showPage('progress');loadProgress()">📊 See My Progress</button>`;
+
+  if (!quizSaved) {
+    quizSaved = true;
+    try {
+      const data = await apiCall('POST', '/quiz/submit', {
+        subject: activeSubject,
+        unit: activeSubjectData.units?.[0]?.title || activeSubject,
+        score: quizScore,
+        total_questions: total
+      });
+      document.getElementById('coin-area').innerHTML = `
+        <div class="coin-result">
+          <div style="font-size:2rem">🪙</div>
+          <div class="amount">+${data.coins_earned} coins earned!</div>
+          <div class="sub">Total wallet: ${data.total_coins} coins</div>
+        </div>`;
+      refreshCoins();
+    } catch(e) {}
+  }
+}
+
+// =============================================================
+//  PROGRESS PAGE
+// =============================================================
+async function loadProgress() {
+  try {
+    const data = await apiCall('GET', '/user/tracking');
+    const records = data.records || [];
+    const coins = data.coins || 0;
+    const total = records.length;
+    const avg = total ? Math.round(records.reduce((a,r)=>a+r.score/Math.max(r.total_questions||3,1),0)/total*100) : 0;
+    const subjects_done = new Set(records.map(r=>r.subject)).size;
+
+    document.getElementById('progress-stats').innerHTML = `
+      <div class="stat-card" style="border-top-color:#3b82f6"><div class="num">${subjects_done}</div><div class="label">Subjects</div></div>
+      <div class="stat-card" style="border-top-color:#10b981"><div class="num">${total}</div><div class="label">Quizzes Done</div></div>
+      <div class="stat-card" style="border-top-color:#8b5cf6"><div class="num">${avg}%</div><div class="label">Avg Score</div></div>
+      <div class="stat-card" style="border-top-color:#f59e0b"><div class="num">🪙${coins}</div><div class="label">Coins</div></div>`;
+
+    const pr = document.getElementById('progress-records');
+    if (!records.length) {
+      pr.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;">No quiz results yet. Complete a quiz to see your progress here.</p>';
+      return;
+    }
+    pr.innerHTML = [...records].reverse().map(r => {
+      const pct = Math.round(r.score / Math.max(r.total_questions||3,1) * 100);
+      const color = SUBJECT_CATALOGUE[r.subject]?.color || '#3b82f6';
+      const tips = (r.tips||[]).map(t=>`<li>${escapeHtml(t)}</li>`).join('');
+      return `<div class="track-card" style="border-left-color:${color}">
+        <h4>${escapeHtml(r.subject)} — ${escapeHtml(r.unit)}</h4>
+        <div class="meta">🗓 ${r.timestamp} · Score: <strong>${r.score}/${r.total_questions||3} (${pct}%)</strong> · 🪙 <strong>+${r.coins_earned||0} coins</strong></div>
+        ${tips ? `<strong style="font-size:0.82rem;color:#1e5799">💡 How to improve:</strong><ul style="padding-left:1.2rem;font-size:0.82rem;color:#4b5563;margin-top:4px">${tips}</ul>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('progress-records').innerHTML = '<p class="text-muted">Could not load progress.</p>'; }
+}
+
+// =============================================================
+//  STUDY GUIDES PAGE
+// =============================================================
+async function loadStudyGuides() {
+  const el = document.getElementById('guides-list');
+  el.innerHTML = '<div class="spinner"></div> Loading...';
+  try {
+    const data = await apiCall('GET', '/study-guides');
+    const guides = data.guides || [];
+    if (!guides.length) {
+      el.innerHTML = `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:1.5rem;text-align:center;color:#1e3a5f">
+        <div style="font-size:2.5rem">📭</div>
+        <strong>No study guides uploaded yet.</strong><br>
+        <span style="font-size:0.85rem">Add PDF files to the study_guides/ folder in your project.</span>
+      </div>`;
+      return;
+    }
+    const colors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06b6d4','#22c55e','#a78bfa','#ec4899'];
+    el.innerHTML = guides.map((g,i) => `<div class="guide-card" style="border-left-color:${colors[i%colors.length]}">
+      <h4>📄 ${escapeHtml(g.name)}</h4>
+      <p>📁 ${escapeHtml(g.path)} · 💾 ${g.size_mb !== null ? g.size_mb + ' MB' : '—'}</p>
+    </div>`).join('') + `<div class="alert alert-success mt-1">
+      💡 <strong>To add a guide:</strong> place any .pdf file into the study_guides/ folder. The filename becomes the guide name.
+    </div>`;
+  } catch(e) { el.innerHTML = '<p class="text-muted">Could not load study guides.</p>'; }
+}
+
+// =============================================================
+//  HELPERS
+// =============================================================
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderMarkdown(text) {
+  // Basic markdown rendering
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^• (.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/\n\n/g, '<br/><br/>')
+    .replace(/\n/g, '<br/>');
+}
+
+function checkPw(pw) {
+  const el = document.getElementById('pw-strength');
+  if (!pw) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  const strong = pw.length>=8 && /[A-Z]/.test(pw) && /[0-9]/.test(pw);
+  if (strong) { el.style.cssText='display:block;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:0.8rem;margin-bottom:8px'; el.textContent='✅ Strong password!'; }
+  else { el.style.cssText='display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:0.8rem;margin-bottom:8px'; el.textContent='⚠️ Needs 8+ chars, uppercase, and a number.'; }
+}
+
+// Override showPage to trigger page-specific loads
+const _showPage = showPage;
+function showPage(name) {
+  _showPage(name);
+  if (name === 'progress') loadProgress();
+  if (name === 'study-guides') loadStudyGuides();
+  if (name === 'subjects-setup') buildSubjectToggles();
+}
+
+// =============================================================
+//  INIT — auto-login if token exists
+// =============================================================
+(async function init() {
+  if (token && username) {
+    try {
+      // Verify token still valid
+      await apiCall('GET', '/user/subjects');
+      await afterLogin();
+    } catch(e) {
+      logout();
+    }
+  }
+})();
+</script>
+</body>
+</html>
