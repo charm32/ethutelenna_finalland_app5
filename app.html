@@ -4,7 +4,20 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>eThute Lenna — Study App</title>
+<link rel="icon" href="/static/Logo_24052026.png" type="image/png">
+<link rel="apple-touch-icon" href="/static/Logo_24052026.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<!-- MathJax: renders LaTeX math like \( \vec{F} \) into proper symbols -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [["\\(", "\\)"], ["$", "$"]],
+      displayMath: [["\\[", "\\]"], ["$$", "$$"]],
+    },
+    options: { skipHtmlTags: ["script","noscript","style","textarea","pre"] }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -120,10 +133,10 @@ a{text-decoration:none;color:inherit;}
 .typing-indicator span:nth-child(2){animation-delay:0.2s;}
 .typing-indicator span:nth-child(3){animation-delay:0.4s;}
 @keyframes typing{0%,80%,100%{transform:scale(1);opacity:0.5;}40%{transform:scale(1.3);opacity:1;}}
-.chat-input-bar{padding:12px 16px;border-top:1px solid #bfdbfe;display:flex;gap:10px;align-items:center;}
+.chat-input-bar{padding:12px 16px;border-top:1px solid #bfdbfe;display:flex;gap:10px;align-items:flex-end;}
 .chat-input-bar select{padding:9px 12px;border:1.5px solid #bfdbfe;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-size:0.82rem;color:#1a3a5c;background:#eff6ff;outline:none;}
-.chat-input-bar input{flex:1;padding:10px 14px;border:1.5px solid #bfdbfe;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-size:0.88rem;color:#1a3a5c;background:#eff6ff;outline:none;}
-.chat-input-bar input:focus{border-color:#1e5799;}
+.chat-input-bar textarea{flex:1;padding:10px 14px;border:1.5px solid #bfdbfe;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-size:0.88rem;color:#1a3a5c;background:#eff6ff;outline:none;resize:none;min-height:38px;max-height:120px;line-height:1.4;overflow-y:auto;}
+.chat-input-bar textarea:focus{border-color:#1e5799;}
 .send-btn{background:linear-gradient(135deg,#1e5799,#2980b9);color:white;border:none;border-radius:10px;width:38px;height:38px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
 .send-btn:hover{transform:scale(1.05);}
 .send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
@@ -152,9 +165,21 @@ a{text-decoration:none;color:inherit;}
 .track-card .meta{font-size:0.75rem;color:#9ca3af;margin-bottom:6px;}
 
 /* ── Study Guides page ── */
-.guide-card{background:white;border-radius:14px;padding:1.1rem 1.3rem;box-shadow:0 2px 10px rgba(30,87,153,0.07);border-left:5px solid #27ae60;margin-bottom:10px;}
-.guide-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a5c30;margin:0 0 2px;font-size:0.95rem;}
-.guide-card p{font-size:0.8rem;color:#6b7280;margin:0;}
+.guide-card{background:white;border-radius:14px;padding:0.85rem 1.2rem;box-shadow:0 2px 8px rgba(30,87,153,0.08);border-left:5px solid #27ae60;margin-bottom:6px;cursor:pointer;transition:all 0.18s;}
+.guide-card:hover{transform:translateY(-2px);box-shadow:0 5px 18px rgba(30,87,153,0.16);}
+.guide-card h4{font-family:'Nunito',sans-serif;font-weight:700;color:#1a5c30;margin:0;font-size:0.92rem;}
+.pov{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;}
+.pbx{background:#fff;border-radius:14px;width:100%;max-width:880px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.4);margin:auto;}
+.phd{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f8fafc;border-radius:14px 14px 0 0;}
+.ptt{font-family:'Nunito',sans-serif;font-weight:800;color:#1a3a5c;font-size:0.95rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pcl{background:#e5e7eb;border:none;border-radius:8px;width:30px;height:30px;font-size:1rem;cursor:pointer;color:#374151;font-weight:800;}
+.pcl:hover{background:#fecaca;color:#991b1b;}
+.pnv{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#eff6ff;border-bottom:1px solid #bfdbfe;flex-wrap:wrap;}
+.pnb{background:#1e5799;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;}
+.pnb:disabled{opacity:0.3;cursor:not-allowed;}
+.pgi{width:48px;padding:4px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:0.82rem;text-align:center;font-family:'Nunito',sans-serif;}
+.pbd{padding:12px;background:#d1d5db;min-height:420px;display:flex;align-items:center;justify-content:center;border-radius:0 0 14px 14px;}
+.pbd img{max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.18);}
 
 /* ── Markdown rendering ── */
 .md-content h1,.md-content h2{font-family:'Nunito',sans-serif;font-weight:700;color:#1a3a5c;margin:8px 0 4px;font-size:1rem;}
@@ -203,10 +228,11 @@ a{text-decoration:none;color:inherit;}
     <div class="sb-coins" id="sb-coins">🪙 0 coins</div>
     <hr class="sb-divider"/>
     <div class="sb-label">Navigation</div>
-    <button class="sb-btn" onclick="showPage('dashboard')">🏠 Dashboard</button>
-    <button class="sb-btn" onclick="showPage('progress')">📊 My Progress</button>
-    <button class="sb-btn" onclick="showPage('study-guides')">📂 Study Guides</button>
-    <button class="sb-btn" onclick="showPage('subjects-setup')">⚙️ My Subjects</button>
+    <button class="sb-btn" onclick="showPageWithEffectsWithEffects('dashboard')">🏠 Dashboard</button>
+    <button class="sb-btn" onclick="showPageWithEffectsWithEffects('progress')">📊 My Progress</button>
+    <button class="sb-btn" onclick="showPageWithEffectsWithEffects('study-guides')">📂 Study Guides</button>
+    <button class="sb-btn" onclick="showPageWithEffectsWithEffects('previous-papers')">📝 Previous Papers</button>
+    <button class="sb-btn" onclick="showPageWithEffectsWithEffects('subjects-setup')">⚙️ My Subjects</button>
     <hr class="sb-divider"/>
     <div class="sb-label" id="sb-subjects-label">My Subjects</div>
     <div id="sb-subject-buttons"></div>
@@ -338,7 +364,10 @@ a{text-decoration:none;color:inherit;}
               <option value="isiZulu">🌍 isiZulu</option>
               <option value="Sesotho">🌍 Sesotho</option>
             </select>
-            <input type="text" id="chat-input" placeholder="Ask a question about your study material..." onkeydown="if(event.key==='Enter')sendQuestion()"/>
+            <textarea id="chat-input" placeholder="Ask a question about your study material...  (Shift+Enter for new line)" rows="1"
+              onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendQuestion();}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"
+            ></textarea>
             <button class="send-btn" id="send-btn" onclick="sendQuestion()">➤</button>
           </div>
         </div>
@@ -359,10 +388,39 @@ a{text-decoration:none;color:inherit;}
     <!-- STUDY GUIDES PAGE -->
     <div id="page-study-guides" class="page">
       <h2 class="section-title">📂 Study Guides</h2>
-      <p class="text-muted mb-2">All uploaded PDFs — the Ask AI button answers from these documents.</p>
+      <p class="text-muted mb-2">Click any guide to browse it page by page.</p>
       <div id="guides-list"></div>
     </div>
 
+    <div id="page-previous-papers" class="page">
+      <h2 class="section-title">📝 Previous Papers</h2>
+      <p class="text-muted mb-2">Browse previous exam papers by subject and year.</p>
+      <div id="papers-list"></div>
+    </div>
+
+
+  <!-- PDF Viewer Modal -->
+  <div id="pov" class="pov" style="display:none;" onclick="if(event.target===this)closePdf()">
+    <div class="pbx">
+      <div class="phd">
+        <span style="font-size:1.2rem">📖</span>
+        <span class="ptt" id="ptitle">Document</span>
+        <button class="pcl" onclick="closePdf()">✕</button>
+      </div>
+      <div class="pnv">
+        <button class="pnb" id="bf" onclick="pdfGo(1)">⏮</button>
+        <button class="pnb" id="bp" onclick="pdfStep(-1)">◀ Prev</button>
+        <span style="font-size:0.82rem;font-weight:700;color:#1a3a5c;display:flex;align-items:center;gap:4px;">
+          Page <input type="number" id="bpg" class="pgi" min="1" value="1" onchange="pdfGo(+this.value||1)"/>
+          of <strong id="bpt">?</strong>
+        </span>
+        <button class="pnb" id="bn" onclick="pdfStep(1)">Next ▶</button>
+        <button class="pnb" id="bl" onclick="pdfGo(PS.total)">⏭</button>
+        <span style="margin-left:auto;font-size:0.7rem;color:#9ca3af;">← → keys · Esc close</span>
+      </div>
+      <div class="pbd" id="pbody"><div class="spinner" style="width:36px;height:36px;"></div></div>
+    </div>
+  </div>
   </main>
 </div>
 
@@ -370,7 +428,7 @@ a{text-decoration:none;color:inherit;}
 // =============================================================
 //  CONFIG
 // =============================================================
-const API = '';  // empty = same origin. Change to your Railway URL if needed.
+const API = 'https://ethutelenna-finalland-app5.onrender.com';  // Render backend URL for Cloudflare deployment.
 
 // =============================================================
 //  STATE
@@ -386,15 +444,47 @@ let quizAnswers = [];
 let quizSaved = false;
 let pendingSubjects = [];
 
+// Session memory — tracks topics asked & questions used for smarter quizzes
+let sessionMemory = {
+  contextTopics:    [],   // topics the student asked about in Ask AI
+  usedQuestions:    [],   // quiz questions already shown this session
+  aiQuizQuestions:  [],   // current set of AI-generated questions
+  quizMode:         'ai', // 'ai' or 'static'
+};
+
+function memoryReset() {
+  // Reset quiz state but keep contextTopics so quiz can use them
+  sessionMemory.aiQuizQuestions = [];
+  sessionMemory.quizMode = 'ai';
+}
+
+function memoryTrackTopic(topic) {
+  if (topic && !sessionMemory.contextTopics.includes(topic)) {
+    sessionMemory.contextTopics.push(topic);
+    if (sessionMemory.contextTopics.length > 20) sessionMemory.contextTopics.shift();
+  }
+}
+
+function memoryTrackQuestion(questionText) {
+  if (questionText && !sessionMemory.usedQuestions.includes(questionText)) {
+    sessionMemory.usedQuestions.push(questionText);
+    if (sessionMemory.usedQuestions.length > 100) sessionMemory.usedQuestions.shift();
+  }
+}
+
+function memoryMarkUsed(questionText) {
+  memoryTrackQuestion(questionText);
+}
+
 const SUBJECT_CATALOGUE = {
-  "Physics":       {emoji:"⚡", color:"#3b82f6"},
-  "Chemistry":     {emoji:"🧪", color:"#10b981"},
-  "Mathematics":   {emoji:"📐", color:"#8b5cf6"},
-  "Math Literacy": {emoji:"🔢", color:"#06b6d4"},
-  "Life Sciences": {emoji:"🌱", color:"#22c55e"},
-  "Geography":     {emoji:"🌍", color:"#f59e0b"},
-  "History":       {emoji:"📜", color:"#a78bfa"},
-  "English":       {emoji:"📖", color:"#ec4899"},
+  "Physical Sciences (Physics)":   {emoji:"⚡", color:"#3b82f6"},
+  "Physical Sciences (Chemistry)": {emoji:"🧪", color:"#10b981"},
+  "Mathematics":                   {emoji:"📐", color:"#8b5cf6"},
+  "Math Literacy":                 {emoji:"🔢", color:"#06b6d4"},
+  "Life Sciences":                 {emoji:"🌱", color:"#22c55e"},
+  "Geography":                     {emoji:"🌍", color:"#f59e0b"},
+  "History":                       {emoji:"📜", color:"#a78bfa"},
+  "English":                       {emoji:"📖", color:"#ec4899"},
 };
 const ALL_SUBJECTS = Object.keys(SUBJECT_CATALOGUE);
 
@@ -472,10 +562,10 @@ async function afterLogin() {
   } catch(e) { userSubjects = []; }
   updateSidebar();
   if (userSubjects.length === 0) {
-    showPage('subjects-setup');
+    showPageWithEffectsWithEffects('subjects-setup');
     buildSubjectToggles();
   } else {
-    showPage('dashboard');
+    showPageWithEffectsWithEffects('dashboard');
     loadDashboard();
   }
 }
@@ -483,7 +573,7 @@ async function afterLogin() {
 function logout() {
   token=''; username=''; userSubjects=[];
   localStorage.removeItem('el_token'); localStorage.removeItem('el_username'); localStorage.removeItem('el_subjects');
-  showPage('auth');
+  showPageWithEffectsWithEffects('auth');
 }
 
 // =============================================================
@@ -520,7 +610,7 @@ function toggleSidebar() {
 // =============================================================
 //  PAGE NAVIGATION
 // =============================================================
-function showPage(name) {
+function showPageWithEffectsWithEffects(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
@@ -529,6 +619,10 @@ function showPage(name) {
   } else {
     document.getElementById('main-content').classList.remove('full');
   }
+  if (name === 'study-guides')    loadStudyGuides();
+  if (name === 'previous-papers') loadPreviousPapers();
+  if (name === 'progress')        loadProgress();
+  if (name === 'dashboard')       loadDashboard();
 }
 
 // =============================================================
@@ -570,7 +664,7 @@ async function saveSubjects() {
     userSubjects = [...pendingSubjects];
     localStorage.setItem('el_subjects', JSON.stringify(userSubjects));
     buildSidebarSubjects();
-    showPage('dashboard');
+    showPageWithEffectsWithEffects('dashboard');
     loadDashboard();
   } catch(e) { alert('Could not save subjects: ' + e.message); }
 }
@@ -648,7 +742,7 @@ async function openSubject(subjectName) {
   // Build quiz
   buildQuiz();
 
-  showPage('subject');
+  showPageWithEffectsWithEffects('subject');
 }
 
 function switchSubjectTab(name, btn) {
@@ -656,6 +750,8 @@ function switchSubjectTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
+  // Auto-rebuild quiz with latest topics when switching to quiz tab
+  if (name === 'quiz' && sessionMemory.contextTopics.length > 0) buildQuiz();
 }
 
 // =============================================================
@@ -666,6 +762,7 @@ async function sendQuestion() {
   const input = document.getElementById('chat-input');
   const q = input.value.trim();
   if (!q) return;
+  memoryTrackTopic(q);  // remember what the student is asking about
   const lang = document.getElementById('chat-lang').value;
   const msgs = document.getElementById('chat-messages');
   const sendBtn = document.getElementById('send-btn');
@@ -677,6 +774,7 @@ async function sendQuestion() {
     <div class="bubble user-bubble">${escapeHtml(q)}</div>
   </div>`;
   input.value = '';
+  input.style.height = 'auto'; // reset textarea height
   sendBtn.disabled = true;
 
   // Show typing
@@ -692,11 +790,16 @@ async function sendQuestion() {
       question: q, language: lang
     });
     document.getElementById(typingId)?.remove();
-    msgs.innerHTML += `<div class="chat-msg">
-      <div class="chat-avatar ai">🍋</div>
-      <div class="bubble md-content">${renderMarkdown(data.answer)}</div>
-    </div>`;
+    const _aiDiv = document.createElement('div');
+    _aiDiv.className = 'chat-msg';
+    _aiDiv.innerHTML = `<div class="chat-avatar ai">🍋</div>
+      <div class="bubble md-content">${renderMarkdown(data.answer)}</div>`;
+    msgs.appendChild(_aiDiv);
     document.getElementById('no-pdf-notice').style.display = 'none';
+    // Tell MathJax to render any LaTeX in the new message
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([_aiDiv]).catch(e => console.warn('MathJax:', e));
+    }
   } catch(e) {
     document.getElementById(typingId)?.remove();
     if (e.message.includes('No PDFs found') || e.message.includes('study guide')) {
@@ -713,39 +816,100 @@ async function sendQuestion() {
 }
 
 // =============================================================
-//  QUIZ
+//  QUIZ — AI-POWERED, CONTEXT-AWARE, NON-REPEATING
 // =============================================================
-function buildQuiz() {
-  quizIndex = 0; quizScore = 0; quizAnswers = []; quizSaved = false;
-  renderQuiz();
+
+async function buildQuiz() {
+  memoryReset();
+  const area = document.getElementById('quiz-area');
+  const lang = document.getElementById('chat-lang')?.value || 'English';
+  const topicPreview = sessionMemory.contextTopics.length
+    ? '<p class="text-muted" style="font-size:0.78rem;margin-top:6px;">📌 Topics detected: ' +
+      sessionMemory.contextTopics.slice(-5).map(t=>'<em>'+escapeHtml(t)+'</em>').join(', ') + '</p>'
+    : '';
+
+  area.innerHTML = `
+    <div style="text-align:center;padding:3rem 1rem;">
+      <div class="spinner" style="width:32px;height:32px;margin:0 auto 1rem;"></div>
+      <h3 style="font-family:Nunito,sans-serif;color:#1a3a5c;margin-bottom:8px;">🍋 Generating your quiz…</h3>
+      <p class="text-muted">Reading your study guides & past papers to create fresh questions${sessionMemory.contextTopics.length ? ' based on what you studied today' : ''}.</p>
+      ${topicPreview}
+    </div>`;
+
+  try {
+    const data = await apiCall('POST', `/subjects/${encodeURIComponent(activeSubject)}/quiz/generate`, {
+      subject: activeSubject,
+      num_questions: 5,
+      context_topics: sessionMemory.contextTopics.slice(-10),
+      used_questions: sessionMemory.usedQuestions.slice(-50),
+      language: lang,
+    });
+    if (!data.questions || data.questions.length === 0) throw new Error('No questions returned.');
+    sessionMemory.aiQuizQuestions = data.questions;
+    sessionMemory.quizMode = 'ai';
+    renderQuiz();
+  } catch(e) {
+    console.warn('AI quiz failed, falling back to static:', e.message);
+    sessionMemory.quizMode = 'static';
+    sessionMemory.aiQuizQuestions = [];
+    quizIndex = 0; quizScore = 0; quizAnswers = []; quizSaved = false;
+    renderQuiz();
+  }
+}
+
+function getActiveQuestions() {
+  if (sessionMemory.quizMode === 'ai' && sessionMemory.aiQuizQuestions.length > 0)
+    return sessionMemory.aiQuizQuestions;
+  return (activeSubjectData?.quiz) || [];
 }
 
 function renderQuiz() {
-  const questions = (activeSubjectData?.quiz) || [];
+  const questions = getActiveQuestions();
   const area = document.getElementById('quiz-area');
-  if (!questions.length) { area.innerHTML = '<p class="text-muted">No quiz questions available for this subject.</p>'; return; }
+  if (!questions.length) {
+    area.innerHTML = `<div style="text-align:center;padding:2rem;">
+      <p class="text-muted">No quiz questions available. Make sure study guide PDFs are uploaded.</p>
+      <button class="btn-primary" style="margin-top:1rem;max-width:240px;" onclick="buildQuiz()">🔄 Try Again</button>
+    </div>`;
+    return;
+  }
   if (quizIndex >= questions.length) { renderQuizResult(); return; }
   const q = questions[quizIndex];
   const pct = Math.round(quizIndex / questions.length * 100);
+  const modeLabel = sessionMemory.quizMode === 'ai'
+    ? '<span style="font-size:0.72rem;background:#eff6ff;border:1px solid #bfdbfe;color:#1e5799;border-radius:20px;padding:2px 10px;font-weight:700;">🤖 From your PDFs</span>'
+    : '<span style="font-size:0.72rem;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;border-radius:20px;padding:2px 10px;font-weight:700;">📚 Standard</span>';
+  const topicTag = q.topic ? `<span style="font-size:0.72rem;color:#9ca3af;margin-left:8px;">📌 ${escapeHtml(q.topic)}</span>` : '';
+
   area.innerHTML = `
     <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${pct}%"></div></div>
-    <p class="text-muted mb-1">Question ${quizIndex+1} of ${questions.length}</p>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <p class="text-muted" style="margin:0;">Question ${quizIndex+1} of ${questions.length}</p>
+      ${topicTag}<span style="margin-left:auto;">${modeLabel}</span>
+    </div>
     <div class="quiz-card">
-      <div class="quiz-question">${escapeHtml(q.q)}</div>
+      <div class="quiz-question">${escapeHtmlKeepLatex(q.q)}</div>
       <div class="quiz-options">
-        ${q.options.map((opt,i) => `<button class="quiz-option" onclick="answerQuiz(${i})" id="opt-${i}">${escapeHtml(opt)}</button>`).join('')}
+        ${q.options.map((opt,i) => `<button class="quiz-option" onclick="answerQuiz(${i})" id="opt-${i}">${escapeHtmlKeepLatex(opt)}</button>`).join('')}
       </div>
       <div id="quiz-feedback" style="margin-top:12px;"></div>
     </div>`;
+  // Render LaTeX in quiz question and options
+  setTimeout(() => {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([area]).catch(e => console.warn('MathJax quiz:', e));
+    }
+  }, 30);
 }
 
 function answerQuiz(idx) {
-  const questions = activeSubjectData.quiz;
+  const questions = getActiveQuestions();
   const q = questions[quizIndex];
   const correct = q.answer;
   const isCorrect = idx === correct;
   if (isCorrect) quizScore++;
   quizAnswers.push({q: q.q, chosen: idx, correct, isCorrect});
+  memoryMarkUsed(q.q);  // prevent this question from appearing again
 
   document.querySelectorAll('.quiz-option').forEach((btn,i) => {
     btn.disabled = true;
@@ -755,11 +919,16 @@ function answerQuiz(idx) {
 
   const fb = document.getElementById('quiz-feedback');
   fb.innerHTML = `<div class="alert ${isCorrect?'alert-success':'alert-error'}" style="margin-bottom:8px;">
-    ${isCorrect ? '✅ Correct!' : '❌ Not quite.'} ${escapeHtml(q.explanation)}
+    ${isCorrect ? '✅ Correct!' : `❌ Not quite. Correct: <strong>${escapeHtmlKeepLatex(q.options[correct])}</strong>`}
+    <br/><span style="font-size:0.85rem;opacity:0.9;">${escapeHtmlKeepLatex(q.explanation)}</span>
   </div>
   <button class="btn-primary" style="margin-top:8px;" onclick="nextQuestion()">
     ${quizIndex+1 < questions.length ? 'Next Question →' : 'See Results 🎉'}
   </button>`;
+  // Render LaTeX in explanation
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    window.MathJax.typesetPromise([fb]).catch(e => console.warn('MathJax:', e));
+  }
 }
 
 function nextQuestion() {
@@ -768,7 +937,8 @@ function nextQuestion() {
 }
 
 async function renderQuizResult() {
-  const total = activeSubjectData.quiz.length;
+  const questions = getActiveQuestions();
+  const total = questions.length || 1;
   const pct = Math.round(quizScore / total * 100);
   const msg = pct >= 80 ? '🌟 Excellent work!' : pct >= 60 ? '👍 Good effort!' : '📚 Keep practising!';
   const area = document.getElementById('quiz-area');
@@ -779,7 +949,7 @@ async function renderQuizResult() {
     </div>
     <div id="coin-area"></div>
     <button class="btn-primary" onclick="buildQuiz()" style="margin-bottom:12px;">🔁 Retake Quiz</button>
-    <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);margin-bottom:12px;" onclick="showPage('progress');loadProgress()">📊 See My Progress</button>`;
+    <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);margin-bottom:12px;" onclick="showPageWithEffectsWithEffects('progress');loadProgress()">📊 See My Progress</button>`;
 
   if (!quizSaved) {
     quizSaved = true;
@@ -842,27 +1012,96 @@ async function loadProgress() {
 // =============================================================
 async function loadStudyGuides() {
   const el = document.getElementById('guides-list');
-  el.innerHTML = '<div class="spinner"></div> Loading...';
+  el.innerHTML = '<div class="spinner"></div>';
   try {
     const data = await apiCall('GET', '/study-guides');
     const guides = data.guides || [];
-    if (!guides.length) {
-      el.innerHTML = `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:1.5rem;text-align:center;color:#1e3a5f">
-        <div style="font-size:2.5rem">📭</div>
-        <strong>No study guides uploaded yet.</strong><br>
-        <span style="font-size:0.85rem">Add PDF files to the study_guides/ folder in your project.</span>
-      </div>`;
-      return;
-    }
-    const colors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06b6d4','#22c55e','#a78bfa','#ec4899'];
-    el.innerHTML = guides.map((g,i) => `<div class="guide-card" style="border-left-color:${colors[i%colors.length]}">
-      <h4>📄 ${escapeHtml(g.name)}</h4>
-      <p>📁 ${escapeHtml(g.path)} · 💾 ${g.size_mb !== null ? g.size_mb + ' MB' : '—'}</p>
-    </div>`).join('') + `<div class="alert alert-success mt-1">
-      💡 <strong>To add a guide:</strong> place any .pdf file into the study_guides/ folder. The filename becomes the guide name.
-    </div>`;
+    if (!guides.length) { el.innerHTML = '<p class="text-muted">No study guides found.</p>'; return; }
+    const cols = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06b6d4','#22c55e','#a78bfa','#ef4444'];
+    el.innerHTML = guides.map((g,i) => {
+      const n=JSON.stringify(g.name), p=JSON.stringify(g.path);
+      return `<div class="guide-card" style="border-left-color:${cols[i%cols.length]}" onclick='openPdf(${n},${p},${g.total_pages||1},"study-guides")'>
+        <h4>\u{1F4D6} ${escapeHtml(g.name)}</h4></div>`;
+    }).join('');
   } catch(e) { el.innerHTML = '<p class="text-muted">Could not load study guides.</p>'; }
 }
+
+async function loadPreviousPapers() {
+  const el = document.getElementById('papers-list');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await apiCall('GET', '/previous-papers');
+    const papers = data.papers || {};
+    const subjects = Object.keys(papers).filter(s => papers[s] && papers[s].length > 0);
+    if (!subjects.length) { el.innerHTML = '<p class="text-muted">No previous papers found.</p>'; return; }
+    const cols = ['#f59e0b','#ef4444','#8b5cf6','#06b6d4','#10b981','#3b82f6','#ec4899','#22c55e'];
+    let html = '';
+    subjects.forEach((subj, si) => {
+      html += `<h3 style="font-family:Nunito,sans-serif;font-weight:800;color:#1a3a5c;margin:18px 0 8px;font-size:1rem;">${escapeHtml(subj)}</h3>`;
+      papers[subj].forEach((p, pi) => {
+        const n = JSON.stringify(p.label), fp = JSON.stringify(p.path);
+        html += `<div class="guide-card" style="border-left-color:${cols[(si*5+pi)%cols.length]}" onclick='openPdf(${n},${fp},0,"previous-papers")'>
+          <h4>\u{1F4DD} ${escapeHtml(p.label)}</h4></div>`;
+      });
+    });
+    el.innerHTML = html;
+  } catch(e) { el.innerHTML = '<p class="text-muted">Could not load previous papers.</p>'; }
+}
+
+// =============================================================
+//  PDF VIEWER
+// =============================================================
+const PS = {path:'',name:'',page:1,total:1,busy:false,ep:'study-guides'};
+
+function openPdf(name,path,total,ep) {
+  PS.name=name; PS.path=path; PS.total=parseInt(total)||1; PS.page=1; PS.busy=false; PS.ep=ep||'study-guides';
+  document.getElementById('ptitle').textContent=name;
+  document.getElementById('bpt').textContent=PS.total||'?';
+  const gi=document.getElementById('bpg'); if(gi)gi.max=PS.total||9999;
+  document.getElementById('pov').style.display='flex';
+  document.body.style.overflow='hidden';
+  pdfLoad(1);
+}
+function closePdf() {
+  document.getElementById('pov').style.display='none';
+  document.body.style.overflow='';
+  document.getElementById('pbody').innerHTML='<div class="spinner" style="width:36px;height:36px;"></div>';
+}
+async function pdfLoad(pg) {
+  if(PS.busy)return;
+  pg=Math.max(1,Math.min(pg,PS.total||9999));
+  PS.page=pg; PS.busy=true;
+  const gi=document.getElementById('bpg'); if(gi)gi.value=pg;
+  document.getElementById('bf').disabled=pg<=1;
+  document.getElementById('bp').disabled=pg<=1;
+  document.getElementById('bn').disabled=pg>=PS.total;
+  document.getElementById('bl').disabled=pg>=PS.total;
+  const bd=document.getElementById('pbody');
+  bd.innerHTML='<div style="text-align:center;color:#6b7280;"><div class="spinner" style="width:36px;height:36px;margin:0 auto 8px;"></div><div style="font-size:0.8rem;">Loading page '+pg+'\u2026</div></div>';
+  try {
+    const url=`${API}/${PS.ep}/page-image?path=${encodeURIComponent(PS.path)}&page=${pg}`;
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){let m='HTTP '+r.status;try{m=(await r.json()).detail||m;}catch(_){}throw new Error(m);}
+    const st=parseInt(r.headers.get('X-Total-Pages'));
+    if(st&&st!==PS.total){PS.total=st;document.getElementById('bpt').textContent=st;if(gi)gi.max=st;}
+    const blob=await r.blob(), src=URL.createObjectURL(blob);
+    bd.innerHTML='';
+    const img=document.createElement('img');
+    img.alt='Page '+pg; img.onload=()=>URL.revokeObjectURL(src); img.src=src;
+    bd.appendChild(img);
+  } catch(err) {
+    bd.innerHTML='<div style="color:#991b1b;padding:20px;text-align:center;font-size:0.85rem;">\u26A0\uFE0F '+escapeHtml(err.message)+'</div>';
+  } finally { PS.busy=false; }
+}
+function pdfStep(d){pdfLoad(PS.page+d);}
+function pdfGo(p){pdfLoad(parseInt(p)||1);}
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('pov').style.display==='none')return;
+  if(document.activeElement===document.getElementById('bpg'))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();pdfStep(1);}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();pdfStep(-1);}
+  if(e.key==='Escape')closePdf();
+});
 
 // =============================================================
 //  HELPERS
@@ -872,17 +1111,56 @@ function escapeHtml(s) {
 }
 
 function renderMarkdown(text) {
-  // Basic markdown rendering
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^• (.+)$/gm, '<li>$1</li>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-    .replace(/\n\n/g, '<br/><br/>')
-    .replace(/\n/g, '<br/>');
+  if (!text) return '';
+  // ─── STEP 1: Protect ALL LaTeX before any HTML escaping ───
+  const _m = [];
+  const _s = m => { _m.push(m); return '\x00L' + (_m.length-1) + '\x00'; };
+  text = text.replace(/\$\$[\s\S]*?\$\$/g, _s);   // $$...$$ display math
+  text = text.replace(/\\\[[\s\S]*?\\\]/g, _s);    // \[...\] display math
+  text = text.replace(/\\\([\s\S]*?\\\)/g, _s);    // \(...\) inline math
+
+  // ─── STEP 2: HTML-escape the non-math text ───
+  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // ─── STEP 3: Markdown formatting ───
+  text = text.replace(/^### (.+)$/gm,'<h3 style="margin:10px 0 4px;font-weight:800;color:#1a3a5c;">$1</h3>');
+  text = text.replace(/^## (.+)$/gm, '<h2 style="margin:12px 0 6px;font-weight:800;color:#1a3a5c;">$1</h2>');
+  text = text.replace(/^# (.+)$/gm,  '<h1 style="margin:14px 0 8px;font-weight:800;color:#1a3a5c;">$1</h1>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  text = text.replace(/`([^`\n]+)`/g,'<code style="background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:0.88em;">$1</code>');
+  // Numbered lists
+  text = text.replace(/((?:^\d+[\.\)]\s+.+(?:\n|$))+)/gm, m => {
+    const li = m.trim().split('\n').map(l=>'<li style="margin:4px 0;">'+l.replace(/^\d+[\.\)]\s*/,'')+'</li>').join('');
+    return '<ol style="margin:8px 0 8px 20px;">'+li+'</ol>\n';
+  });
+  // Bullet lists
+  text = text.replace(/((?:^[-*•]\s+.+(?:\n|$))+)/gm, m => {
+    const li = m.trim().split('\n').map(l=>'<li style="margin:4px 0;">'+l.replace(/^[-*•]\s*/,'')+'</li>').join('');
+    return '<ul style="margin:8px 0 8px 20px;">'+li+'</ul>\n';
+  });
+  text = text.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid #e5e7eb;margin:10px 0;"/>');
+  text = text.replace(/\n\n+/g,'</p><p style="margin:8px 0;">');
+  text = text.replace(/\n/g,'<br/>');
+  text = '<p style="margin:4px 0;">'+text+'</p>';
+
+  // ─── STEP 4: Restore LaTeX untouched (MathJax will render these) ───
+  text = text.replace(/\x00L(\d+)\x00/g, (_, i) => _m[+i]);
+  return text;
+}
+
+// HTML-escape that PRESERVES LaTeX (for quiz questions & options)
+function escapeHtmlKeepLatex(text) {
+  if (!text) return '';
+  const _m = [];
+  const _s = m => { _m.push(m); return '\x00L' + (_m.length-1) + '\x00'; };
+  text = text.replace(/\$\$[\s\S]*?\$\$/g, _s);
+  text = text.replace(/\\\[[\s\S]*?\\\]/g, _s);
+  text = text.replace(/\\\([\s\S]*?\\\)/g, _s);
+  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  text = text.replace(/\x00L(\d+)\x00/g, (_, i) => _m[+i]);
+  return text;
 }
 
 function checkPw(pw) {
@@ -894,14 +1172,8 @@ function checkPw(pw) {
   else { el.style.cssText='display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:0.8rem;margin-bottom:8px'; el.textContent='⚠️ Needs 8+ chars, uppercase, and a number.'; }
 }
 
-// Override showPage to trigger page-specific loads
-const _showPage = showPage;
-function showPage(name) {
-  _showPage(name);
-  if (name === 'progress') loadProgress();
-  if (name === 'study-guides') loadStudyGuides();
-  if (name === 'subjects-setup') buildSubjectToggles();
-}
+// Page navigation with side effects
+
 
 // =============================================================
 //  INIT — auto-login if token exists

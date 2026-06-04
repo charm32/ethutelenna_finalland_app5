@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>eThute Lenna — Grade 12 AI Tutor</title>
+  <link rel="icon" href="/static/Logo_24052026.png" type="image/png">
+  <link rel="apple-touch-icon" href="/static/Logo_24052026.png">
   <meta name="description" content="Finally, Maths & Science that makes sense. Instant homework help with animated visuals, in English, isiZulu or Sesotho, 24/7." />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
@@ -336,7 +338,7 @@ ul{list-style:none;}
       <div class="section-label">How It Works</div>
       <h2 class="section-heading">Three simple steps.</h2>
       <div class="steps">
-        <div class="step reveal"><div class="step-num">01</div><div class="step-content"><h3>Sign Up &amp; Choose Your Subjects</h3><p>Create your account, pick the subjects you're studying — Physics, Maths, Chemistry and more.</p></div></div>
+        <div class="step reveal"><div class="step-num">01</div><div class="step-content"><h3>Sign Up &amp; Choose Your Subjects</h3><p>Create your account, pick the subjects you're studying — Physical Sciences (Physics), Maths, Chemistry and more.</p></div></div>
         <div class="step-line"></div>
         <div class="step reveal"><div class="step-num">02</div><div class="step-content"><h3>Watch, Ask &amp; Learn</h3><p>Watch animated lessons, ask questions in English, isiZulu or Sesotho, and get instant AI-powered answers.</p></div></div>
         <div class="step-line"></div>
@@ -350,7 +352,7 @@ ul{list-style:none;}
       <div class="section-label">Subjects</div>
       <h2 class="section-heading">All your Grade 12 subjects, covered.</h2>
       <div class="subjects-grid">
-        <div class="subject-pill reveal" style="--c:#3b82f6">⚡ Physics</div>
+        <div class="subject-pill reveal" style="--c:#3b82f6">⚡ Physical Sciences (Physics)</div>
         <div class="subject-pill reveal" style="--c:#10b981">🧪 Chemistry</div>
         <div class="subject-pill reveal" style="--c:#8b5cf6">📐 Mathematics</div>
         <div class="subject-pill reveal" style="--c:#06b6d4">🔢 Math Literacy</div>
@@ -376,7 +378,7 @@ ul{list-style:none;}
       <div style="max-width:480px;margin:0 auto 2rem;">
         <select id="wl-subject" style="width:100%;padding:13px 16px;border:1.5px solid #bfdbfe;border-radius:14px;font-family:'Nunito Sans',sans-serif;font-size:0.95rem;color:#1a3a5c;background:#eff6ff;outline:none;">
           <option value="">Which subject do you struggle with the most?</option>
-          <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+          <option>Mathematics</option><option>Physical Sciences (Physics)</option><option>Chemistry</option>
           <option>Life Sciences</option><option>Math Literacy</option>
           <option>Accounting</option><option>History</option><option>English</option>
         </select>
@@ -568,7 +570,7 @@ async function handleRegister(e) {
   const school   = document.getElementById('reg-school')?.value?.trim() || '';
   const dob      = document.getElementById('reg-dob')?.value || '';
   try {
-    const res = await fetch('/auth/register', {
+    const res = await fetch('https://ethutelenna-finalland-app5.onrender.com/auth/register', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username, password:pw, dob, school})
     });
@@ -578,7 +580,7 @@ async function handleRegister(e) {
     localStorage.setItem('el_username', data.username);
     document.querySelector('#register form').style.display='none';
     document.getElementById('reg-success').style.display='block';
-    setTimeout(() => { window.location.href = '/app'; }, 1500);
+    setTimeout(() => { window.location.href = '/app.html'; }, 1500);
   } catch(err) { alert('Registration error: ' + err.message); }
 }
 async function handleLogin(e) {
@@ -587,7 +589,7 @@ async function handleLogin(e) {
   const password = document.getElementById('login-password')?.value || document.querySelector('#login input[type=password]')?.value || '';
   if (!username || !password) { alert('Please enter your username and password.'); return; }
   try {
-    const res = await fetch('/auth/login', {
+    const res = await fetch('https://ethutelenna-finalland-app5.onrender.com/auth/login', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username, password})
     });
@@ -595,7 +597,7 @@ async function handleLogin(e) {
     if (!res.ok) { alert('⚠️ ' + (data.detail || 'Login failed.')); return; }
     localStorage.setItem('el_token', data.access_token);
     localStorage.setItem('el_username', data.username);
-    window.location.href = '/app';
+    window.location.href = '/app.html';
   } catch(err) { alert('Login error: ' + err.message); }
 }
 
