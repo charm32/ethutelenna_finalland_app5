@@ -1,14 +1,16 @@
 # =============================================================================
 #  eThute Lenna 5.0 — FastAPI Backend + Frontend Server
-#  Platform : Railway (replaces Streamlit)
+#  Platform : Render (Production)
 #  AI API   : OpenRouter (DeepSeek V3)
 #  Vector DB: ChromaDB
 #  Embeds   : HuggingFace all-MiniLM-L6-v2
 #
-#  NEW in v5.0:
-#  - Serves the full HTML frontend (no Streamlit)
-#  - RAG searches BOTH study_guides/ AND previous_papers/ for selected subject
-#  - Landing page (index.html) login/register buttons are now active
+#  v5.0.1 FIXES:
+#  ✅ CORS: Added https://ethutelenna.com to allowed origins (FIXES LOGIN ERROR)
+#  ✅ datetime.utcnow() replaced with datetime.now(timezone.utc) (deprecation)
+#  ✅ JWT_SECRET no longer crashes app if missing — uses fallback with warning
+#  ✅ Debugger import made optional with fallback to standard logging
+#  ✅ Centralized configuration moved to config.py
 # =============================================================================
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -63,42 +65,51 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+# ── Config ────────────────────────────────────────────────────────────────────
 from config import AppConfig
-from debugger import DebugLogger
+
+# ── Debugger (with safe fallback if debugger.py is missing) ───────────────────
+# FIX: Don't crash if debugger.py is missing — fall back to standard logging
+try:
+    from debugger import DebugLogger
+    _debug = DebugLogger(level=logging.INFO)
+    logger = _debug.get_logger(__name__)
+except ImportError:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+    logger.warning("debugger.py not found — using standard logging instead.")
 
 # =============================================================================
 #  CONSTANTS & CONFIGURATION
 # =============================================================================
 
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEEPSEEK_CHAT_MODEL = "deepseek/deepseek-chat"
+OPENROUTER_BASE_URL = AppConfig.OPENROUTER_BASE_URL
+DEEPSEEK_CHAT_MODEL = AppConfig.DEFAULT_MODEL
 
-USERS_FILE        = "users.json"
-TRACKING_FILE     = "tracking.json"
-COINS_PER_CORRECT = 10
+USERS_FILE        = AppConfig.USERS_FILE
+TRACKING_FILE     = AppConfig.TRACKING_FILE
+COINS_PER_CORRECT = AppConfig.COINS_PER_CORRECT
 
-JWT_ALGORITHM    = "HS256"
-JWT_EXPIRE_HOURS = 24
+JWT_ALGORITHM    = AppConfig.JWT_ALGORITHM
+JWT_EXPIRE_HOURS = AppConfig.JWT_EXPIRE_HOURS
 
-LANGUAGES = {
-    "English": {"trans_dest": "en",  "flag": "🇿🇦"},
-    "isiZulu": {"trans_dest": "zu",  "flag": "🌍"},
-    "Sesotho": {"trans_dest": "st",  "flag": "🌍"},
-}
-
-debug  = DebugLogger(level=logging.INFO)
-logger = debug.get_logger(__name__)
+LANGUAGES = AppConfig.LANGUAGES
 
 
 def get_openrouter_key() -> str:
-    return os.environ.get("OPENROUTER_API_KEY", "")
+    """Get OpenRouter API key from environment."""
+    return AppConfig.get_openrouter_key()
 
 
 def get_jwt_secret() -> str:
-    secret = os.environ.get("JWT_SECRET", "")
-    if not secret:
-        raise RuntimeError("JWT_SECRET environment variable is not set.")
-    return secret
+    """
+    FIX: Get JWT secret from env var, falling back to default with warning.
+    Previously this raised RuntimeError causing 500 errors on every request.
+    """
+    return AppConfig.get_jwt_secret()
 
 
 # =============================================================================
@@ -294,7 +305,6 @@ SUBJECT_CATALOGUE: Dict[str, Any] = {
 
 ALL_SUBJECT_NAMES = list(SUBJECT_CATALOGUE.keys())
 
-# FIX: Split into two correct keys matching the catalogue exactly
 SUBJECT_PDF_MAP: Dict[str, List[str]] = {
     "Physical Sciences (Physics)":   ["physics", "physical science", "physical_science"],
     "Physical Sciences (Chemistry)": ["chemistry", "chemical"],
@@ -306,7 +316,6 @@ SUBJECT_PDF_MAP: Dict[str, List[str]] = {
     "English":                       ["english"],
 }
 
-# FIX: Corrected subject names (previously had doubled/wrong names)
 GUIDE_SUBJECTS = ["Physical Sciences (Physics)", "Physical Sciences (Chemistry)", "Mathematics", "Math Literacy"]
 PAPER_SUBJECTS = ["Physical Sciences (Physics)", "Physical Sciences (Chemistry)", "Mathematics", "Math Literacy"]
 
@@ -343,7 +352,7 @@ def register_user(username: str, password: str, dob: str = "", school: str = "")
         "password": hash_password(password),
         "dob":      dob,
         "school":   school,
-        "created":  str(datetime.now()),
+        "created":  str(datetime.now(timezone.utc)),  # FIX: timezone-aware
         "subjects": [],
         "coins":    0,
     }
@@ -396,7 +405,7 @@ def save_tracking(username: str, subject: str, unit: str, score: int,
         "score":           score,
         "total_questions": total_questions,
         "tips":            tips,
-        "timestamp":       datetime.now().strftime("%d %b %Y %H:%M"),
+        "timestamp":       datetime.now(timezone.utc).strftime("%d %b %Y %H:%M"),  # FIX
         "coins_earned":    coins_earned,
     })
     save_json(TRACKING_FILE, data)
@@ -415,7 +424,7 @@ def get_tracking(username: str) -> list:
 def create_access_token(username: str) -> str:
     payload = {
         "sub": username,
-        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRE_HOURS),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRE_HOURS),  # FIX
     }
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
 
@@ -458,7 +467,7 @@ def translate_text(text: str, dest_lang: str) -> str:
 # =============================================================================
 
 def get_available_study_guides() -> Dict[str, str]:
-    guides_dir = Path("study_guides")
+    guides_dir = Path(AppConfig.STUDY_GUIDES_DIR)
     guides_dir.mkdir(exist_ok=True)
     return {
         pdf.stem.replace("_", " ").replace("-", " "): str(pdf)
@@ -467,17 +476,17 @@ def get_available_study_guides() -> Dict[str, str]:
 
 
 def get_available_previous_papers() -> Dict[str, str]:
-    papers_dir = Path("previous_papers")
+    papers_dir = Path(AppConfig.PREVIOUS_PAPERS_DIR)
     papers_dir.mkdir(exist_ok=True)
     pdfs = {
         pdf.stem.replace("_", " ").replace("-", " "): str(pdf)
         for pdf in sorted(papers_dir.rglob("*.pdf"))
     }
-    print("=" * 60)
-    print("PREVIOUS PAPERS FOUND:")
+    logger.info("=" * 60)
+    logger.info("PREVIOUS PAPERS FOUND:")
     for name, path in pdfs.items():
-        print(f"{name} -> {path}")
-    print("=" * 60)
+        logger.info(f"{name} -> {path}")
+    logger.info("=" * 60)
     return pdfs
 
 
@@ -584,16 +593,11 @@ def sanitize_collection_name(name: str) -> str:
     ChromaDB only allows [a-zA-Z0-9._-], must start/end with alphanumeric,
     and must be 3-512 characters long.
     """
-    # Replace any illegal character (including parentheses) with underscore
     sanitized = re.sub(r'[^a-zA-Z0-9._-]', '_', name)
-    # Collapse multiple consecutive underscores into one
     sanitized = re.sub(r'_+', '_', sanitized)
-    # Strip leading/trailing underscores, dots, hyphens (must start/end with alphanumeric)
     sanitized = sanitized.strip('_.-')
-    # Ensure minimum length of 3 characters
     if len(sanitized) < 3:
         sanitized = sanitized + '_db'
-    # Truncate to 512 characters max
     sanitized = sanitized[:512]
     return sanitized.lower()
 
@@ -604,7 +608,7 @@ def get_embeddings():
         from langchain_huggingface import HuggingFaceEmbeddings
     except ImportError:
         from langchain_community.embeddings import HuggingFaceEmbeddings
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return HuggingFaceEmbeddings(model_name=AppConfig.EMBED_MODEL)
 
 
 def get_deepseek_llm(temperature: float = 0) -> ChatOpenAI:
@@ -636,7 +640,7 @@ def clean_answer(text: str) -> str:
 def load_subject_db(subject_name: str, pdf_path: str):
     """Load a single PDF into ChromaDB (used for quiz explanations)."""
     collection_name = sanitize_collection_name(f"ethute_{subject_name}_single")
-    chroma_path     = f"chroma_db/{collection_name}"
+    chroma_path     = f"{AppConfig.CHROMA_DIR}/{collection_name}"
     try:
         embeddings = get_embeddings()
         if os.path.exists(chroma_path) and os.listdir(chroma_path):
@@ -675,12 +679,11 @@ def load_subject_db_multi(subject_name: str, pdf_paths: List[str]):
         return None
 
     collection_name = sanitize_collection_name(f"ethute_{subject_name}_multi")
-    chroma_path     = f"chroma_db/{collection_name}"
+    chroma_path     = f"{AppConfig.CHROMA_DIR}/{collection_name}"
 
     try:
         embeddings = get_embeddings()
 
-        # ── Load existing database ────────────────────────────────
         if os.path.exists(chroma_path) and os.listdir(chroma_path):
             logger.info(f"Loading existing ChromaDB for {subject_name}")
             return Chroma(
@@ -699,23 +702,23 @@ def load_subject_db_multi(subject_name: str, pdf_paths: List[str]):
         all_chunks = []
 
         for pdf_path in pdf_paths:
-            print("=" * 60)
-            print(f"Loading PDF: {pdf_path}")
+            logger.info("=" * 60)
+            logger.info(f"Loading PDF: {pdf_path}")
             try:
                 if not os.path.exists(pdf_path):
-                    print(f"FILE DOES NOT EXIST: {pdf_path}")
+                    logger.warning(f"FILE DOES NOT EXIST: {pdf_path}")
                     continue
 
                 loader = PyPDFLoader(pdf_path)
                 docs   = loader.load()
 
                 if not docs:
-                    print(f"NO DOCUMENTS FOUND IN: {pdf_path}")
+                    logger.warning(f"NO DOCUMENTS FOUND IN: {pdf_path}")
                     continue
 
-                print(f"Loaded {len(docs)} pages")
+                logger.info(f"Loaded {len(docs)} pages")
                 chunks = splitter.split_documents(docs)
-                print(f"Created {len(chunks)} chunks")
+                logger.info(f"Created {len(chunks)} chunks")
 
                 valid_chunks = []
                 for doc in chunks:
@@ -728,37 +731,31 @@ def load_subject_db_multi(subject_name: str, pdf_paths: List[str]):
                     doc.metadata["pdf_path"] = pdf_path
                     valid_chunks.append(doc)
 
-                print(f"Valid chunks added: {len(valid_chunks)}")
+                logger.info(f"Valid chunks added: {len(valid_chunks)}")
                 all_chunks.extend(valid_chunks)
-                logger.info(f"Loaded {len(valid_chunks)} chunks from {pdf_path}")
 
             except Exception as e:
-                print(f"FAILED TO LOAD PDF: {pdf_path}")
-                print(f"ERROR: {str(e)}")
                 logger.warning(f"Skipping broken PDF {pdf_path}: {e}")
 
-        print("=" * 60)
-        print(f"TOTAL CHUNKS LOADED: {len(all_chunks)}")
+        logger.info("=" * 60)
+        logger.info(f"TOTAL CHUNKS LOADED: {len(all_chunks)}")
 
         if not all_chunks:
             logger.error(f"No chunks could be loaded for {subject_name}")
-            print("NO VALID PDF CONTENT COULD BE LOADED")
             return None
 
-        print("Creating ChromaDB vector store...")
+        logger.info("Creating ChromaDB vector store...")
         db = Chroma.from_documents(
             documents=all_chunks,
             embedding=embeddings,
             collection_name=collection_name,
             persist_directory=chroma_path,
         )
-        print("ChromaDB created successfully")
         logger.info(f"Built ChromaDB for {subject_name} with {len(all_chunks)} chunks")
         return db
 
     except Exception as e:
         logger.error(f"Multi-PDF ChromaDB error for {subject_name}: {e}")
-        print(f"VECTOR DATABASE ERROR: {str(e)}")
         return None
 
 
@@ -770,16 +767,14 @@ def answer_question_from_guide(question: str, vector_db) -> tuple:
             search_type="similarity",
             search_kwargs={"k": AppConfig.RETRIEVAL_K},
         )
-        # Get source docs so we can extract page number
         source_docs = retriever.invoke(question)
         source_page = None
         source_pdf  = None
         if source_docs:
             meta = source_docs[0].metadata
-            # LangChain loaders store page as 0-based int
             raw_page = meta.get("page")
             if raw_page is not None:
-                source_page = int(raw_page) + 1   # convert to 1-based
+                source_page = int(raw_page) + 1
             source_pdf = meta.get("source") or meta.get("pdf_path")
 
         prompt = ChatPromptTemplate.from_template(RAG_PROMPT)
@@ -817,7 +812,6 @@ def explain_quiz_answer(question: str, correct_answer: str,
         return chain.invoke(question)
     except Exception:
         return fallback
-
 
 
 # =============================================================================
@@ -861,7 +855,6 @@ def generate_ai_quiz(subject_name: str, vector_db, num_questions: int,
     try:
         llm = get_deepseek_llm(temperature=0.7)
 
-        # Build retrieval query from subject + user-explored topics
         if context_topics:
             retrieval_query = f"{subject_name}: " + ", ".join(context_topics[:5])
         else:
@@ -895,7 +888,6 @@ def generate_ai_quiz(subject_name: str, vector_db, num_questions: int,
         response = llm.invoke(prompt_text)
         raw_text = response.content if hasattr(response, "content") else str(response)
 
-        # Strip accidental markdown fences
         raw_text = raw_text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.split("```")[1]
@@ -905,7 +897,6 @@ def generate_ai_quiz(subject_name: str, vector_db, num_questions: int,
 
         questions = _json.loads(raw_text)
 
-        # Validate each question
         validated = []
         for item in questions:
             if not all(k in item for k in ("q", "options", "answer", "explanation", "topic")):
@@ -914,7 +905,6 @@ def generate_ai_quiz(subject_name: str, vector_db, num_questions: int,
                 continue
             if not isinstance(item["answer"], int) or not (0 <= item["answer"] <= 3):
                 continue
-            # Skip if too similar to an already-used question
             q_lower = item["q"].lower()
             if any(q_lower[:40] in uq.lower() for uq in used_questions):
                 continue
@@ -926,6 +916,7 @@ def generate_ai_quiz(subject_name: str, vector_db, num_questions: int,
     except Exception as exc:
         logger.error(f"AI quiz generation error for {subject_name}: {exc}")
         return []
+
 
 # =============================================================================
 #  PYDANTIC REQUEST / RESPONSE MODELS
@@ -961,8 +952,8 @@ class AskRequest(BaseModel):
 class AskResponse(BaseModel):
     answer:      str
     language:    str
-    source_page: Optional[int] = None   # PDF page the answer came from
-    pdf_path:    Optional[str] = None   # which PDF file
+    source_page: Optional[int] = None
+    pdf_path:    Optional[str] = None
 
 
 class QuizExplainRequest(BaseModel):
@@ -994,15 +985,15 @@ class PDFPageResponse(BaseModel):
 class AIQuizGenerateRequest(BaseModel):
     subject:          str
     num_questions:    int = 5
-    context_topics:   List[str] = []   # topics the user explored (AI chat / study units)
-    used_questions:   List[str] = []   # question texts already seen — never repeat these
+    context_topics:   List[str] = []
+    used_questions:   List[str] = []
     language:         str = "English"
 
 
 class AIQuizQuestion(BaseModel):
     q:           str
     options:     List[str]
-    answer:      int          # index of correct option
+    answer:      int
     explanation: str
     topic:       str
 
@@ -1023,25 +1014,33 @@ app = FastAPI(
         "**Stack**: FastAPI · DeepSeek (OpenRouter) · ChromaDB · HuggingFace Embeddings\n\n"
         "All protected routes require `Authorization: Bearer <token>` from `/auth/login`."
     ),
-    version="5.0.0",
+    version="5.0.1",
 )
+
+# =============================================================================
+#  CORS MIDDLEWARE — FIXED CONFIGURATION
+# =============================================================================
+# ✅ FIX: Now reads allowed origins from config.py (which includes ethutelenna.com)
+# This was the main cause of the "Failed to fetch" / CORS errors.
+# To add new origins, edit config.py → ALLOWED_ORIGINS list.
+# OR set ALLOWED_ORIGINS env var in Render (comma-separated).
+
+ALLOWED_ORIGINS = AppConfig.get_allowed_origins()
+logger.info(f"CORS allowed origins: {ALLOWED_ORIGINS}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ethutelenna-finalland-app5.onrender.com",   # Render (same-server requests)
-        "https://ethutelenna-finalland-app5.pages.dev",      # Cloudflare Pages default domain
-        # Add your custom domain below if you connect one in Cloudflare:
-        # "https://www.yourdomain.com",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Pages"],  # For PDF page rendering
 )
 
-static_dir = Path("static")
+# Static files
+static_dir = Path(AppConfig.STATIC_DIR)
 static_dir.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=AppConfig.STATIC_DIR), name="static")
 
 
 # =============================================================================
@@ -1072,9 +1071,10 @@ def serve_app():
 def health_check():
     return {
         "status":    "ok",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),  # FIX: timezone-aware
         "model":     DEEPSEEK_CHAT_MODEL,
-        "version":   "5.0.0",
+        "version":   "5.0.1",
+        "cors_origins": ALLOWED_ORIGINS,  # Debug helper
     }
 
 
@@ -1190,8 +1190,6 @@ def subject_guide_page(subject_name: str, page: int = 1, language: str = "Englis
     return PDFPageResponse(text=text, page=page, total_pages=total_pages, language=language)
 
 
-# FIX: Restored correct indentation — all lines now inside the function body
-
 def _render_page_png(pdf_path: str, page_num: int, dpi: int = 150) -> tuple:
     """Render PDF page to PNG using PyMuPDF. Returns (png_bytes, total_pages)."""
     try:
@@ -1215,8 +1213,7 @@ def subject_page_image(subject_name: str, page: int = 1,
                        current_user: str = Depends(get_current_user)):
     """
     Render a single PDF page from the subject's study guide as a PNG image.
-    Returns the image as a StreamingResponse so the browser can display it directly.
-    No external API needed — uses pdftoppm (poppler-utils) installed on the server.
+    Uses pdftoppm (poppler-utils) installed on the server.
     """
     import subprocess, tempfile, glob
     from fastapi.responses import StreamingResponse
@@ -1234,14 +1231,12 @@ def subject_page_image(subject_name: str, page: int = 1,
                             detail=f"Page {page} out of range (1–{total}).")
     try:
         with tempfile.TemporaryDirectory() as tmp:
-            # pdftoppm renders page N to {tmp}/pg-N.png (1-indexed via -f/-l)
             out_prefix = f"{tmp}/pg"
             subprocess.run(
                 ["pdftoppm", "-r", "150", "-png", "-f", str(page), "-l", str(page),
                  pdf_path, out_prefix],
                 check=True, capture_output=True
             )
-            # Find the generated file
             matches = glob.glob(f"{out_prefix}*.png")
             if not matches:
                 raise HTTPException(status_code=500, detail="Could not render PDF page.")
@@ -1304,7 +1299,6 @@ def subject_quiz_explain(subject_name: str, body: QuizExplainRequest,
     return {"explanation": explanation, "language": body.language}
 
 
-
 # =============================================================================
 #  AI QUIZ GENERATION ENDPOINT
 # =============================================================================
@@ -1335,7 +1329,7 @@ def generate_quiz(subject_name: str, body: AIQuizGenerateRequest,
             detail="Could not build the vector store. Check that your PDF files are valid.",
         )
 
-    num_q = max(3, min(body.num_questions, 15))  # clamp between 3 and 15
+    num_q = max(3, min(body.num_questions, 15))
     questions = generate_ai_quiz(
         subject_name=subject_name,
         vector_db=vector_db,
@@ -1358,6 +1352,7 @@ def generate_quiz(subject_name: str, body: AIQuizGenerateRequest,
             item["options"]     = [translate_text(o, lang_code) for o in item["options"]]
 
     return AIQuizGenerateResponse(questions=questions, language=body.language)
+
 
 # =============================================================================
 #  QUIZ SUBMISSION ROUTE
@@ -1396,8 +1391,6 @@ def list_study_guides(subject: Optional[str] = None,
             total_pages = 0
         guides_list.append({"name": name, "path": path, "size_mb": size_mb, "total_pages": total_pages})
     return {"subject": subject, "guides": guides_list, "count": len(guides_list)}
-
-
 
 
 @app.get("/study-guides/page-image", tags=["Study Guides"])
@@ -1472,8 +1465,8 @@ def list_previous_papers(subject: Optional[str] = None,
     result: Dict[str, Any] = {}
 
     months_re = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)', re.IGNORECASE)
-    paper_re  = re.compile(r'[/\\][Pp](\d)[/\\]')       # matches /p1/ or \p2\
-    paper_fn  = re.compile(r'\b[Pp]\s*(\d)\b')           # matches P1 or P2 in filename
+    paper_re  = re.compile(r'[/\\][Pp](\d)[/\\]')
+    paper_fn  = re.compile(r'\b[Pp]\s*(\d)\b')
 
     for subj in subjects_to_scan:
         filtered = _filter_pdfs_by_subject(all_papers, subj)
@@ -1481,15 +1474,12 @@ def list_previous_papers(subject: Optional[str] = None,
         for name, path in filtered.items():
             year = _extract_year(name)
 
-            # Extract paper number from folder path first, then filename
             pm = paper_re.search(path) or paper_fn.search(path) or paper_fn.search(name)
             paper_num = f"P{pm.group(1)}" if pm else ""
 
-            # Extract month from path or filename
             mm = months_re.search(path) or months_re.search(name)
             month = mm.group(1).capitalize()[:3] if mm else ""
 
-            # Build clean label: "Physical Sciences (Physics) (P2, Nov, 2025)"
             parts = [p for p in [paper_num, month, year] if p]
             label = f"{subj} ({', '.join(parts)})" if parts else f"{subj} ({name})"
 
@@ -1501,7 +1491,6 @@ def list_previous_papers(subject: Optional[str] = None,
                 "paper":  paper_num,
             })
 
-        # Sort: newest year first, then month (Nov before Jun), then P2 before P1
         month_order = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,
                        "Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12,"":0}
         papers_list.sort(key=lambda p: (
@@ -1536,7 +1525,7 @@ def previous_paper_page(subject: str, year: str, page: int = 1, language: str = 
 
 # =============================================================================
 #  ENTRY POINT
-#  Railway: uvicorn main:app --host 0.0.0.0 --port $PORT
+#  Render: uvicorn main:app --host 0.0.0.0 --port $PORT
 # =============================================================================
 
 if __name__ == "__main__":
