@@ -1,0 +1,59 @@
+# =============================================================================
+#  eThute Lenna 5.0 — Python Dependencies
+#  Versions pinned to what was confirmed working in the original deployment.
+#
+#  ⚠️  PYTHON VERSION IS CRITICAL  ⚠️
+#  REQUIRED: Python 3.11.x  (3.12.x also works)
+#  DO NOT USE Python 3.13 or 3.14.
+#
+#  Why: pydantic==2.9.2 depends on pydantic-core==2.23.4, which ships
+#  pre-built wheels only up to cp312. On Python 3.13/3.14 pip falls back to
+#  compiling pydantic-core from source via Rust/maturin, which fails on
+#  Render's read-only Cargo cache (the "Read-only file system (os error 30)"
+#  build error).
+#
+#  The Python version is pinned in the `.python-version` file. On Render,
+#  also confirm there is no PYTHON_VERSION env var overriding it to 3.13+.
+# =============================================================================
+
+# ── FastAPI Web Framework ───────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+email-validator==2.3.0
+
+# ── Data validation ─────────────────────────────────────────────────────
+# Requires Python <= 3.12 (see header note above).
+pydantic==2.9.2
+
+# ── Environment / Config ────────────────────────────────────────────────
+python-dotenv==1.0.1
+
+# ── JWT Authentication ──────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+
+# ── PDF Processing ──────────────────────────────────────────────────────
+PyPDF2==3.0.1
+pymupdf==1.24.10
+
+# ── Translation ─────────────────────────────────────────────────────────
+deep-translator==1.11.4
+
+# ── LangChain Stack ─────────────────────────────────────────────────────
+langchain==0.2.16
+langchain-community==0.2.16
+langchain-core==0.2.41
+langchain-chroma==0.1.4
+langchain-huggingface==0.0.3
+langchain-openai==0.1.25
+langchain-text-splitters==0.2.4
+
+# ── Vector Database ─────────────────────────────────────────────────────
+chromadb==0.5.23
+
+# ── Embeddings (HuggingFace) ────────────────────────────────────────────
+sentence-transformers==3.0.1
+transformers==4.46.3
+
+# ── Numerical Stack (pinned for stability) ──────────────────────────────
+numpy==1.26.4
