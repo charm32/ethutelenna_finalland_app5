@@ -257,7 +257,7 @@ a{text-decoration:none;color:inherit;}
             <button class="auth-tab" onclick="switchAuthTab('register')">📝 Register</button>
           </div>
           <!-- Login -->
-          <div id="tab-login" class="tab-panel active">
+          <div id="tab-" class="tab-panel active">
             <div class="form-group">
               <label>Username</label>
               <input type="text" id="login-user" placeholder="Enter your username" onkeydown="if(event.key==='Enter')doLogin()"/>
@@ -428,7 +428,7 @@ a{text-decoration:none;color:inherit;}
 // =============================================================
 //  CONFIG
 // =============================================================
-const API = 'https://ethutelenna-finalland-app5.onrender.com';  // Render backend URL for Cloudflare deployment.
+const API = import.meta.env.VITE_API_URL;  // aws backend URL for Cloudflare deployment.
 
 // =============================================================
 //  STATE
