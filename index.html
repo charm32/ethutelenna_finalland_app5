@@ -406,7 +406,7 @@ ul{list-style:none;}
         <div style="flex:1;min-width:0;max-width:320px;background:linear-gradient(145deg,#f0f7ff,#e8f0fe);border-radius:20px;padding:2rem 1.5rem;box-shadow:0 8px 28px rgba(30,87,153,0.12);border:2px solid #94a3b8;text-align:center;position:relative;display:flex;flex-direction:column;">
           <div style="font-size:2.5rem;margin-bottom:0.5rem;">🥈</div>
           <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1.2rem;color:#1a3a5c;margin-bottom:0.3rem;">Silver</div>
-          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2.2rem;color:#475569;margin-bottom:0.3rem;">R50<span style="font-size:1rem;font-weight:600;">/mo</span></div>
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2.2rem;color:#475569;margin-bottom:0.3rem;">R20<span style="font-size:1rem;font-weight:600;">/mo</span></div>
           <div style="font-size:0.82rem;color:#6b7280;margin-bottom:1.2rem;">Tier 2</div>
           <ul style="list-style:none;text-align:left;margin-bottom:1.5rem;font-size:0.88rem;color:#1a3a5c;display:flex;flex-direction:column;gap:8px;">
             <li>✅ Unlimited daily uses</li>
@@ -422,7 +422,7 @@ ul{list-style:none;}
           <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#f59e0b;color:white;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:1px;padding:4px 16px;border-radius:100px;">BEST VALUE</div>
           <div style="font-size:2.5rem;margin-bottom:0.5rem;">🥇</div>
           <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1.2rem;color:#1a3a5c;margin-bottom:0.3rem;">Gold</div>
-          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2.2rem;color:#92400e;margin-bottom:0.3rem;">R100<span style="font-size:1rem;font-weight:600;">/mo</span></div>
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2.2rem;color:#92400e;margin-bottom:0.3rem;">R50<span style="font-size:1rem;font-weight:600;">/mo</span></div>
           <div style="font-size:0.82rem;color:#6b7280;margin-bottom:1.2rem;">Tier 3</div>
           <ul style="list-style:none;text-align:left;margin-bottom:1.5rem;font-size:0.88rem;color:#1a3a5c;display:flex;flex-direction:column;gap:8px;">
             <li>✅ Everything in Silver</li>
@@ -570,7 +570,7 @@ async function handleRegister(e) {
   const school   = document.getElementById('reg-school')?.value?.trim() || '';
   const dob      = document.getElementById('reg-dob')?.value || '';
   try {
-    const res = await fetch('https://ethutelenna-finalland-app5.onrender.com/auth/register', {
+    const res = await fetch('https://api.ethutelenna.com/auth/register', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username, password:pw, dob, school})
     });
@@ -589,7 +589,7 @@ async function handleLogin(e) {
   const password = document.getElementById('login-password')?.value || document.querySelector('#login input[type=password]')?.value || '';
   if (!username || !password) { alert('Please enter your username and password.'); return; }
   try {
-    const res = await fetch('https://ethutelenna-finalland-app5.onrender.com/auth/login', {
+    const res = await fetch('https://api.ethutelenna.com/auth/login', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username, password})
     });
